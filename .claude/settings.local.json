@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:api.github.com)",
+      "Bash(curl -sSL -o img/__TRACKED_VAR__ https://raw.githubusercontent.com/maxstellar/onekey/main/img/__TRACKED_VAR__)",
+      "Bash(curl -sSL -o audio/key.wav \"https://raw.githubusercontent.com/maxstellar/onekey/main/audio/key.wav\")",
+      "Bash(curl -sSL -o audio/key.mp3 \"https://raw.githubusercontent.com/maxstellar/onekey/main/audio/key.mp3\")",
+      "Bash(curl -sSL -o favicon.ico \"https://raw.githubusercontent.com/maxstellar/onekey/main/favicon.ico\")",
+      "Bash(bun run *)"
+    ]
+  }
+}
