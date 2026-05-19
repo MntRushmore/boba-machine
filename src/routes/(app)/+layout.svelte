@@ -1,18 +1,10 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
-	import { theme } from '$lib/theme.svelte';
 	import KeycapRail from '$lib/components/nav/KeycapRail.svelte';
 
 	let { children } = $props();
-
-	$effect(() => {
-		if (browser) {
-			localStorage.setItem('theme', theme.dark ? 'dark' : 'light');
-		}
-	});
 </script>
 
-<div class="dashboard" data-theme={theme.dark ? 'dark' : 'light'}>
+<div class="dashboard">
 	<KeycapRail />
 	<div class="work">
 		<main class="content">
@@ -30,8 +22,6 @@
 		--keycap-color: white;
 		--keycap-border: #0e0f12;
 		min-height: 100vh;
-		background-color: var(--color-bg);
-		color: var(--color-text);
 	}
 
 	.work {
