@@ -68,13 +68,13 @@
 			</li>
 			<li class="started-item">
 				<span class="started-check"></span>
-				<span>create a project</span>
-				<a href="/projects" class="started-action">go</a>
+				<span>set your address</span>
+				<a href="/account" class="started-action">go</a>
 			</li>
 			<li class="started-item">
 				<span class="started-check"></span>
-				<span>skibidi fortnite</span>
-				<a href="/skibidifortnite" class="started-action">go</a>
+				<span>create a project</span>
+				<a href="/projects" class="started-action">go</a>
 			</li>
 		</ul>
 	</div>
