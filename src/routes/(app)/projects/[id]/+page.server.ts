@@ -1,12 +1,38 @@
 import { redirect, error, fail } from '@sveltejs/kit';
+import { TOKEN_ENCRYPTION_KEY } from '$env/static/private';
+import { dev } from '$app/environment';
 import { db } from '$lib/server/db';
 import { projects, users } from '$lib/server/db/schema';
 import { eq, and, isNull } from 'drizzle-orm';
 import { uploadImageBlob } from '$lib/server/cdn';
+import { decryptToken } from '$lib/server/session';
+
+const HACKATIME_BASE_URL = 'https://hackatime.hackclub.com';
+const DEV_ENCRYPTION_KEY = '0'.repeat(64);
 
 async function getDbUser(hcaId: string) {
-	const [row] = await db.select({ id: users.id }).from(users).where(eq(users.hcaId, hcaId)).limit(1);
+	const [row] = await db.select().from(users).where(eq(users.hcaId, hcaId)).limit(1);
 	return row ?? null;
+}
+
+async function getHackatimeSeconds(dbUser: typeof users.$inferSelect, projectNames: string[]): Promise<number> {
+	if (!projectNames.length) return 0;
+	if (!dbUser.hackatimeTokenCt || !dbUser.hackatimeTokenIv || !dbUser.hackatimeTokenTag) return 0;
+
+	const encKey = Buffer.from(TOKEN_ENCRYPTION_KEY || (dev ? DEV_ENCRYPTION_KEY : ''), 'hex');
+	const accessToken = decryptToken(dbUser.hackatimeTokenCt, dbUser.hackatimeTokenIv, dbUser.hackatimeTokenTag, encKey);
+
+	const res = await fetch(`${HACKATIME_BASE_URL}/api/v1/authenticated/projects`, {
+		headers: { Authorization: `Bearer ${accessToken}` }
+	});
+	if (!res.ok) return 0;
+
+	const data = await res.json();
+	const raw: any[] = Array.isArray(data) ? data : (data.data ?? data.projects ?? []);
+	const nameSet = new Set(projectNames);
+	return raw
+		.filter((p: any) => nameSet.has(String(p.name ?? '')))
+		.reduce((sum: number, p: any) => sum + Number(p.total_seconds ?? p.totalSeconds ?? 0), 0);
 }
 
 export async function load({ locals, params }) {
@@ -21,12 +47,16 @@ export async function load({ locals, params }) {
 	const [project] = await db
 		.select()
 		.from(projects)
-		.where(and(eq(projects.id, id), eq(projects.userId, dbUser.id)))
+		.where(
+			locals.isReviewer
+				? eq(projects.id, id)
+				: and(eq(projects.id, id), eq(projects.userId, dbUser.id))
+		)
 		.limit(1);
 
 	if (!project) error(404, 'project not found');
 
-	return { project };
+	return { project, isReviewer: locals.isReviewer };
 }
 
 export const actions = {
@@ -44,6 +74,7 @@ export const actions = {
 		const description = (form.get('description') as string)?.trim() || null;
 		const repoUrl = (form.get('repo_url') as string)?.trim() || null;
 		const demoUrl = (form.get('demo_url') as string)?.trim() || null;
+		const hackatimeProject = (form.get('hackatime_project') as string)?.trim() || null;
 
 		if (!name) return fail(400, { error: 'project name is required' });
 
@@ -58,10 +89,13 @@ export const actions = {
 			}
 		}
 
-		await db
+		const [updated] = await db
 			.update(projects)
-			.set({ name, description, screenshotUrl, repoUrl, demoUrl, updatedAt: new Date() })
-			.where(and(eq(projects.id, id), eq(projects.userId, dbUser.id)));
+			.set({ name, description, screenshotUrl, repoUrl, demoUrl, hackatimeProject, updatedAt: new Date() })
+			.where(and(eq(projects.id, id), eq(projects.userId, dbUser.id)))
+			.returning({ id: projects.id });
+
+		if (!updated && locals.isReviewer) return fail(403, { error: 'reviewers cannot edit other people\'s projects' });
 
 		return { success: true };
 	},
@@ -88,6 +122,7 @@ export const actions = {
 		const description = (form.get('description') as string)?.trim() || null;
 		const repoUrl = (form.get('repo_url') as string)?.trim() || null;
 		const demoUrl = (form.get('demo_url') as string)?.trim() || null;
+		const hackatimeProject = (form.get('hackatime_project') as string)?.trim() || null;
 
 		if (!name) return fail(400, { error: 'project name is required' });
 
@@ -106,10 +141,15 @@ export const actions = {
 		if (!repoUrl) return fail(400, { error: 'repo url is required before submitting' });
 		if (!demoUrl) return fail(400, { error: 'demo url is required before submitting' });
 		if (!screenshotUrl) return fail(400, { error: 'screenshot is required before submitting' });
+		if (!hackatimeProject) return fail(400, { error: 'hackatime project is required before submitting' });
+
+		const projectNames = hackatimeProject.split(',').map((s) => s.trim()).filter(Boolean);
+		const totalSeconds = await getHackatimeSeconds(dbUser, projectNames);
+		if (totalSeconds < 3600) return fail(400, { error: `at least 1 hour of hackatime required (you have ${Math.floor(totalSeconds / 60)}m)` });
 
 		await db
 			.update(projects)
-			.set({ name, description, screenshotUrl, repoUrl, demoUrl, status: 'pending', updatedAt: new Date() })
+			.set({ name, description, screenshotUrl, repoUrl, demoUrl, hackatimeProject, status: 'pending', updatedAt: new Date() })
 			.where(eq(projects.id, id));
 
 		return { success: true };
@@ -132,5 +172,19 @@ export const actions = {
 		if (!deleted) return fail(403, { error: 'cannot delete a submitted or approved project' });
 
 		redirect(302, '/projects');
+	},
+
+	reject: async ({ locals, params }) => {
+		if (!locals.isReviewer) return fail(403, { error: 'forbidden' });
+
+		const id = parseInt(params.id, 10);
+		if (isNaN(id)) error(404, 'project not found');
+
+		await db
+			.update(projects)
+			.set({ status: null, updatedAt: new Date() })
+			.where(eq(projects.id, id));
+
+		return { success: true };
 	}
 };

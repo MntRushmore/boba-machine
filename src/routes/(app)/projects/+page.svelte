@@ -3,6 +3,14 @@
 
 	let { data, form } = $props();
 
+	function formatHours(seconds: number) {
+		const h = Math.floor(seconds / 3600);
+		const m = Math.floor((seconds % 3600) / 60);
+		if (h === 0) return `${m}m`;
+		if (m === 0) return `${h}h`;
+		return `${h}h ${m}m`;
+	}
+
 	let creating = $state(false);
 	let closing = $state(false);
 
@@ -42,8 +50,8 @@
 			</div>
 			<div class="project-card-top">
 				<span class="project-name">{project.name}</span>
-				{#if project.status}
-					<span class="status-badge status-{project.status}">{project.status}</span>
+				{#if project.totalSeconds > 0}
+					<span class="ht-time">{formatHours(project.totalSeconds)}</span>
 				{/if}
 			</div>
 			{#if project.description}
@@ -163,7 +171,7 @@
 			calc(-1 * (clamp(1.25rem, 2vw, 2rem) + var(--border-width))) 0.75rem;
 		height: 200px;
 		flex-shrink: 0;
-		background: #2a2a2a;
+		background: #d9d9d9;
 	}
 
 	.project-card-img {
@@ -180,32 +188,17 @@
 		gap: 0.75rem;
 	}
 
-	.project-name {
+	.ht-time {
+		font-size: 1.1rem;
 		font-weight: bold;
-		font-size: 1.4rem;
-	}
-
-	.status-badge {
-		font-size: 0.6rem;
-		font-weight: bold;
-		text-transform: uppercase;
-		letter-spacing: 0.08em;
-		border-radius: var(--radius-pill);
-		padding: 0.2em 0.55em;
+		letter-spacing: -0.02em;
+		color: var(--color-text-soft);
 		flex-shrink: 0;
 	}
 
-	.status-pending {
-		background: #2a2620;
-		color: #c9a84c;
-	}
-	.status-approved {
-		background: #1a2a1a;
-		color: #6abf6a;
-	}
-	.status-rejected {
-		background: #2a1a1a;
-		color: #c96a6a;
+	.project-name {
+		font-weight: bold;
+		font-size: 1.4rem;
 	}
 
 	.project-desc {

@@ -56,6 +56,7 @@ export const projects = pgTable('projects', {
 	repoUrl: text('repo_url'),
 	demoUrl: text('demo_url'),
 	status: text('status'),
+	hackatimeProject: text('hackatime_project'),
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().default(sql`now()`),
 	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().default(sql`now()`)
 });

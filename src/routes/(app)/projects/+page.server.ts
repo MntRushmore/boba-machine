@@ -1,14 +1,20 @@
 import { redirect, fail } from '@sveltejs/kit';
+import { TOKEN_ENCRYPTION_KEY } from '$env/static/private';
+import { dev } from '$app/environment';
 import { db } from '$lib/server/db';
 import { projects, users } from '$lib/server/db/schema';
 import { eq, asc } from 'drizzle-orm';
 import { uploadImageBlob } from '$lib/server/cdn';
+import { decryptToken } from '$lib/server/session';
+
+const HACKATIME_BASE_URL = 'https://hackatime.hackclub.com';
+const DEV_ENCRYPTION_KEY = '0'.repeat(64);
 
 export async function load({ locals }) {
 	if (!locals.user) redirect(302, '/login');
 
 	const [dbUser] = await db
-		.select({ id: users.id })
+		.select()
 		.from(users)
 		.where(eq(users.hcaId, locals.user.sub))
 		.limit(1);
@@ -21,7 +27,32 @@ export async function load({ locals }) {
 		.where(eq(projects.userId, dbUser.id))
 		.orderBy(asc(projects.id));
 
-	return { projects: userProjects };
+	// Fetch hackatime seconds map (project name → seconds)
+	let htSecondsMap: Record<string, number> = {};
+	if (dbUser.hackatimeTokenCt && dbUser.hackatimeTokenIv && dbUser.hackatimeTokenTag) {
+		try {
+			const encKey = Buffer.from(TOKEN_ENCRYPTION_KEY || (dev ? DEV_ENCRYPTION_KEY : ''), 'hex');
+			const accessToken = decryptToken(dbUser.hackatimeTokenCt, dbUser.hackatimeTokenIv, dbUser.hackatimeTokenTag, encKey);
+			const res = await fetch(`${HACKATIME_BASE_URL}/api/v1/authenticated/projects?include_archived=true`, {
+				headers: { Authorization: `Bearer ${accessToken}` }
+			});
+			if (res.ok) {
+				const data = await res.json();
+				const raw: any[] = Array.isArray(data) ? data : (data.data ?? data.projects ?? []);
+				for (const p of raw) {
+					htSecondsMap[String(p.name ?? '')] = Number(p.total_seconds ?? p.totalSeconds ?? 0);
+				}
+			}
+		} catch { /* best-effort; cards just won't show hours */ }
+	}
+
+	const projectsWithHours = userProjects.map((p) => {
+		const names = (p.hackatimeProject ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+		const totalSeconds = names.reduce((sum, name) => sum + (htSecondsMap[name] ?? 0), 0);
+		return { ...p, totalSeconds };
+	});
+
+	return { projects: projectsWithHours };
 }
 
 export const actions = {

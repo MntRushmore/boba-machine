@@ -10,6 +10,58 @@
 	let screenshotCleared = $state(false);
 	let screenshotInput = $state<HTMLInputElement | null>(null);
 
+	type HackatimeProject = { name: string; totalSeconds: number; lastSeen: number };
+	let hackatimeProjects = $state<HackatimeProject[]>([]);
+	let hackatimeLoading = $state(false);
+	let hackatimeError = $state('');
+
+	const MAX_HT_PROJECTS = 3;
+
+	let selectedHtProjects = $state<string[]>([]);
+
+	$effect(() => {
+		selectedHtProjects = (project.hackatimeProject ?? '').split(',').map((s: string) => s.trim()).filter(Boolean);
+	});
+
+	$effect(() => {
+		if (isDraft) loadHackatimeProjects();
+	});
+
+	const htValue = $derived(selectedHtProjects.join(', '));
+
+	function addHtProject(name: string) {
+		if (!name || selectedHtProjects.includes(name) || selectedHtProjects.length >= MAX_HT_PROJECTS) return;
+		selectedHtProjects = [...selectedHtProjects, name];
+	}
+
+	function removeHtProject(idx: number) {
+		selectedHtProjects = selectedHtProjects.filter((_, i) => i !== idx);
+	}
+
+	async function loadHackatimeProjects() {
+		if (hackatimeProjects.length || hackatimeLoading) return;
+		hackatimeLoading = true;
+		hackatimeError = '';
+		try {
+			const res = await fetch('/api/hackatime/projects');
+			if (!res.ok) throw new Error(await res.text());
+			const json = await res.json();
+			hackatimeProjects = json.projects;
+		} catch {
+			hackatimeError = 'could not load hackatime projects';
+		} finally {
+			hackatimeLoading = false;
+		}
+	}
+
+	function formatHours(seconds: number) {
+		const h = Math.floor(seconds / 3600);
+		const m = Math.floor((seconds % 3600) / 60);
+		if (h === 0) return `${m}m`;
+		if (m === 0) return `${h}h`;
+		return `${h}h ${m}m`;
+	}
+
 	function handleFilePick(e: Event) {
 		const input = e.currentTarget as HTMLInputElement;
 		const file = input.files?.[0];
@@ -30,13 +82,23 @@
 	);
 
 	let showToast = $state(false);
+	let showErrorToast = $state(false);
 	let toastTimer: ReturnType<typeof setTimeout>;
+	let errorToastTimer: ReturnType<typeof setTimeout>;
 
 	$effect(() => {
 		if (form?.success) {
 			clearTimeout(toastTimer);
 			showToast = true;
 			toastTimer = setTimeout(() => (showToast = false), 3500);
+		}
+	});
+
+	$effect(() => {
+		if (form?.error) {
+			clearTimeout(errorToastTimer);
+			showErrorToast = true;
+			errorToastTimer = setTimeout(() => (showErrorToast = false), 3500);
 		}
 	});
 </script>
@@ -111,7 +173,7 @@
 </div>
 
 <div class="bento">
-	<div class="card card-wide">
+	<div class="card card-wide" class:card-full={!isDraft}>
 		{#if project.status}
 			<div class="card-header">
 				<span class="status-badge status-{project.status}">{project.status}</span>
@@ -176,6 +238,41 @@
 							placeholder="https://..."
 						/>
 					</label>
+					<div class="edit-field edit-field-full">
+						<span class="edit-field-label">hackatime projects</span>
+						<input type="hidden" name="hackatime_project" value={htValue} />
+						<div class="ht-pills">
+							{#each selectedHtProjects as name, i (name)}
+								{@const seconds = hackatimeProjects.find((p) => p.name === name)?.totalSeconds ?? 0}
+								<span class="ht-pill">
+									{name}{#if seconds > 0}<span class="ht-pill-time"> · {formatHours(seconds)}</span>{/if}
+									<button type="button" class="ht-pill-remove" onclick={() => removeHtProject(i)}>×</button>
+								</span>
+							{/each}
+							{#if selectedHtProjects.length < MAX_HT_PROJECTS}
+								<details class="ht-dropdown" ontoggle={(e) => e.currentTarget.open && loadHackatimeProjects()}>
+									<summary class="ht-add-btn">+ add project</summary>
+									<div class="ht-dropdown-list">
+										{#if hackatimeLoading}
+											<span class="ht-dropdown-item ht-dropdown-muted">loading…</span>
+										{:else if hackatimeError}
+											<span class="ht-dropdown-item ht-dropdown-muted">{hackatimeError}</span>
+										{:else if hackatimeProjects.filter((p) => !selectedHtProjects.includes(p.name)).length === 0}
+											<span class="ht-dropdown-item ht-dropdown-muted">no projects found</span>
+										{:else}
+											{#each hackatimeProjects.filter((p) => !selectedHtProjects.includes(p.name)) as hp (hp.name)}
+												<button
+													type="button"
+													class="ht-dropdown-item"
+													onclick={(e) => { addHtProject(hp.name); (e.currentTarget.closest('details') as HTMLDetailsElement).open = false; }}
+												>{hp.name} · {formatHours(hp.totalSeconds)}</button>
+											{/each}
+										{/if}
+									</div>
+								</details>
+							{/if}
+						</div>
+					</div>
 				</div>
 				<div class="edit-actions">
 					<button type="submit" class="btn-save">save</button>
@@ -213,28 +310,48 @@
 						</span>
 					</div>
 				{/if}
+				{#if project.hackatimeProject}
+					<div class="field">
+						<span class="field-key">hackatime</span>
+						<div class="field-val ht-pills-readonly">
+							{#each project.hackatimeProject.split(',').map((s) => s.trim()).filter(Boolean) as name (name)}
+								<span class="ht-pill ht-pill-static">{name}</span>
+							{/each}
+						</div>
+					</div>
+				{/if}
 			</div>
 		{/if}
 	</div>
 
+	{#if !isDraft && data.isReviewer}
 	<div class="card card-right">
-		{#if isDraft}
-			<span class="card-label">submit</span>
-			<p class="danger-desc">ready? submit your project for review.</p>
-			{#if form?.error && !form?.success}
-				<p class="form-error">{form.error}</p>
-			{/if}
-			<button type="submit" form="save-form" formaction="?/submit" class="btn-submit">submit for review</button>
-
-			<div class="danger-section has-top">
-				<span class="card-label">danger zone</span>
-				<p class="danger-desc">permanently delete this project - this cannot be undone.</p>
-				<form method="POST" action="?/delete" use:enhance>
-					<button type="submit" class="btn-delete">delete project</button>
-				</form>
-			</div>
-		{/if}
+		<span class="card-label">review</span>
+		<p class="danger-desc">send this project back to the submitter as a draft.</p>
+		<form method="POST" action="?/reject" use:enhance>
+			<button type="submit" class="btn-reject">reject</button>
+		</form>
 	</div>
+	{/if}
+
+	{#if isDraft}
+	<div class="card card-right">
+		<span class="card-label">submit</span>
+		<p class="danger-desc">ready? submit your project for review.</p>
+		{#if form?.error && !form?.success}
+			<p class="form-error">{form.error}</p>
+		{/if}
+		<button type="submit" form="save-form" formaction="?/submit" class="btn-submit">submit for review</button>
+
+		<div class="danger-section has-top">
+			<span class="card-label">danger zone</span>
+			<p class="danger-desc">permanently delete this project - this cannot be undone.</p>
+			<form method="POST" action="?/delete" use:enhance>
+				<button type="submit" class="btn-delete">delete project</button>
+			</form>
+		</div>
+	</div>
+	{/if}
 </div>
 
 {#if showToast}
@@ -245,6 +362,19 @@
 			onclick={() => {
 				showToast = false;
 				clearTimeout(toastTimer);
+			}}>✕</button
+		>
+	</div>
+{/if}
+
+{#if showErrorToast && form?.error}
+	<div class="toast toast-error" role="alert">
+		{form.error}
+		<button
+			class="toast-close"
+			onclick={() => {
+				showErrorToast = false;
+				clearTimeout(errorToastTimer);
 			}}>✕</button
 		>
 	</div>
@@ -317,8 +447,8 @@
 	}
 
 	.banner-icon {
-		width: 2.5rem;
-		height: 2.5rem;
+		width: 7rem;
+		height: 7rem;
 		color: white;
 	}
 
@@ -372,6 +502,10 @@
 
 	.card.card-wide {
 		grid-column: span 2;
+	}
+
+	.card.card-full {
+		grid-column: span 3;
 	}
 
 	.card.card-right {
@@ -507,6 +641,128 @@
 		min-height: 5rem;
 	}
 
+	.ht-pills {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.4rem;
+	}
+
+	.ht-pill {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		background: var(--color-text);
+		color: var(--color-bg);
+		border-radius: var(--radius-pill);
+		padding: 0.45rem 0.65rem;
+		font-size: 0.9rem;
+		font-weight: 600;
+		white-space: nowrap;
+	}
+
+	.ht-pill-time {
+		opacity: 0.7;
+		font-weight: 400;
+	}
+
+	.ht-pill-remove {
+		background: none;
+		border: none;
+		color: inherit;
+		font-size: 1rem;
+		line-height: 1;
+		padding: 0;
+		cursor: pointer;
+		opacity: 0.6;
+		font-family: inherit;
+	}
+
+	.ht-pill-remove:hover {
+		opacity: 1;
+	}
+
+	.ht-pill-static {
+		opacity: 1;
+	}
+
+	.ht-pills-readonly {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem;
+	}
+
+	.ht-dropdown {
+		position: relative;
+	}
+
+	.ht-add-btn {
+		list-style: none;
+		border: dotted calc(var(--border-width) / 2);
+		border-radius: var(--radius-pill);
+		padding: 0.45rem 0.65rem;
+		font-size: 0.9rem;
+		font-family: inherit;
+		color: var(--color-text-soft);
+		cursor: pointer;
+		white-space: nowrap;
+		user-select: none;
+	}
+
+	.ht-add-btn::-webkit-details-marker {
+		display: none;
+	}
+
+	.ht-add-btn:hover {
+		color: var(--color-text);
+		border-color: var(--color-text);
+	}
+
+	.ht-dropdown-list {
+		position: absolute;
+		top: calc(100% + 0.3rem);
+		left: 0;
+		z-index: 20;
+		background: var(--color-bg);
+		border: solid var(--border-width);
+		border-radius: calc(var(--radius-card) / 2);
+		padding: 0.3rem;
+		display: flex;
+		flex-direction: column;
+		min-width: 14rem;
+		max-height: 16rem;
+		overflow-y: auto;
+	}
+
+	.ht-dropdown-item {
+		background: none;
+		border: none;
+		font-family: inherit;
+		font-size: 0.85rem;
+		color: var(--color-text);
+		padding: 0.4rem 0.6rem;
+		border-radius: calc(var(--radius-card) / 3);
+		cursor: pointer;
+		text-align: left;
+		white-space: nowrap;
+	}
+
+	.ht-dropdown-item:hover {
+		background: var(--color-text);
+		color: var(--color-bg);
+	}
+
+	.ht-dropdown-muted {
+		color: var(--rail-label);
+		cursor: default;
+		font-size: 0.8rem;
+	}
+
+	.ht-dropdown-muted:hover {
+		background: none;
+		color: var(--rail-label);
+	}
+
 	.edit-actions {
 		display: flex;
 		gap: 0.6rem;
@@ -584,6 +840,27 @@
 		color: white;
 	}
 
+	.btn-reject {
+		font-size: 0.85rem;
+		font-weight: bold;
+		border-radius: var(--radius-pill);
+		padding: 0.45rem 0.9rem;
+		cursor: pointer;
+		border: solid var(--border-width) #c9a84c;
+		font-family: inherit;
+		background: transparent;
+		color: #c9a84c;
+		width: 100%;
+		transition:
+			0.3s color,
+			0.3s background-color;
+	}
+
+	.btn-reject:hover {
+		background: #c9a84c;
+		color: black;
+	}
+
 	.form-error {
 		font-size: 0.8rem;
 		color: #c96a6a;
@@ -606,6 +883,11 @@
 		gap: clamp(0.5rem, 0.8vw, 0.75rem);
 		white-space: nowrap;
 		box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+	}
+
+	.toast-error {
+		background: #3a1a1a;
+		color: #c96a6a;
 	}
 
 	.toast-close {
