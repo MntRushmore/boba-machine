@@ -31,15 +31,15 @@
 <div class="project-grid">
 	{#each data.projects as project (project.id)}
 		<a href="/projects/{project.id}" class="project-card">
-			{#if project.screenshotUrl}
-				<div class="project-card-img-wrap">
+			<div class="project-card-img-wrap">
+				{#if project.screenshotUrl}
 					<img
 						src={project.screenshotUrl}
 						alt="{project.name} screenshot"
 						class="project-card-img"
 					/>
-				</div>
-			{/if}
+				{/if}
+			</div>
 			<div class="project-card-top">
 				<span class="project-name">{project.name}</span>
 				{#if project.status}
@@ -163,6 +163,7 @@
 			calc(-1 * (clamp(1.25rem, 2vw, 2rem) + var(--border-width))) 0.75rem;
 		height: 200px;
 		flex-shrink: 0;
+		background: #2a2a2a;
 	}
 
 	.project-card-img {

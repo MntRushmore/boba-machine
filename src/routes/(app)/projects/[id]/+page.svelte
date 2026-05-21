@@ -29,14 +29,6 @@
 		screenshotCleared ? '' : screenshotPreview || project.screenshotUrl || ''
 	);
 
-	const createdAt = $derived(
-		new Date(project.createdAt).toLocaleDateString('en-US', {
-			year: 'numeric',
-			month: 'short',
-			day: 'numeric'
-		})
-	);
-
 	let showToast = $state(false);
 	let toastTimer: ReturnType<typeof setTimeout>;
 
@@ -120,21 +112,18 @@
 
 <div class="bento">
 	<div class="card card-wide">
-		<div class="card-header">
-			<span class="card-label">project</span>
-			<div class="meta">
-				{#if project.status}
-					<span class="status-badge status-{project.status}">{project.status}</span>
-				{/if}
-				<span class="created-at">created {createdAt}</span>
+		{#if project.status}
+			<div class="card-header">
+				<span class="status-badge status-{project.status}">{project.status}</span>
 			</div>
-		</div>
+		{/if}
 
 		{#if isDraft}
 			{#if form?.error}
 				<p class="form-error">{form.error}</p>
 			{/if}
 			<form
+				id="save-form"
 				method="POST"
 				action="?/save"
 				enctype="multipart/form-data"
@@ -232,18 +221,19 @@
 		{#if isDraft}
 			<span class="card-label">submit</span>
 			<p class="danger-desc">ready? submit your project for review.</p>
-			<form method="POST" action="?/submit" use:enhance>
-				<button type="submit" class="btn-submit">submit for review</button>
-			</form>
-		{/if}
+			{#if form?.error && !form?.success}
+				<p class="form-error">{form.error}</p>
+			{/if}
+			<button type="submit" form="save-form" formaction="?/submit" class="btn-submit">submit for review</button>
 
-		<div class="danger-section" class:has-top={isDraft}>
-			<span class="card-label">danger zone</span>
-			<p class="danger-desc">permanently delete this project - this cannot be undone.</p>
-			<form method="POST" action="?/delete" use:enhance>
-				<button type="submit" class="btn-delete">delete project</button>
-			</form>
-		</div>
+			<div class="danger-section has-top">
+				<span class="card-label">danger zone</span>
+				<p class="danger-desc">permanently delete this project - this cannot be undone.</p>
+				<form method="POST" action="?/delete" use:enhance>
+					<button type="submit" class="btn-delete">delete project</button>
+				</form>
+			</div>
+		{/if}
 	</div>
 </div>
 
@@ -406,19 +396,6 @@
 		color: var(--color-text-soft);
 		font-weight: bold;
 		flex-shrink: 0;
-	}
-
-	.meta {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-	}
-
-	.created-at {
-		font-size: 0.75rem;
-		color: var(--rail-label);
-		text-transform: uppercase;
-		letter-spacing: 0.08em;
 	}
 
 	.status-badge {
