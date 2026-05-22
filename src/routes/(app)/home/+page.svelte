@@ -1,8 +1,10 @@
 <script lang="ts">
+	import { page } from '$app/state';
+
 	let { data } = $props();
 
 	const communityGoalHours = 2000;
-	let communityHours = $state(670);
+	const communityHours = $derived(Math.round((page.data.communityApprovedSeconds ?? 0) / 3600));
 	const communityProgress = $derived((communityHours / communityGoalHours) * 100);
 	const goals = [
 		{ pct: 5, label: "decide max's pfp", hours: '100 hours' },

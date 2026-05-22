@@ -56,7 +56,7 @@ export async function load({ locals, params }) {
 
 	if (!project) error(404, 'project not found');
 
-	return { project, isReviewer: locals.isReviewer };
+	return { project, isReviewer: locals.isReviewer, isOwnProject: project.userId === dbUser.id };
 }
 
 export const actions = {
@@ -180,9 +180,46 @@ export const actions = {
 		const id = parseInt(params.id, 10);
 		if (isNaN(id)) error(404, 'project not found');
 
-		await db
+		const [updated] = await db
 			.update(projects)
 			.set({ status: null, updatedAt: new Date() })
+			.where(and(eq(projects.id, id), eq(projects.status, 'pending')))
+			.returning({ id: projects.id });
+
+		if (!updated) return fail(400, { error: 'can only reject pending projects' });
+
+		return { success: true };
+	},
+
+	approve: async ({ locals, params }) => {
+		if (!locals.isReviewer) return fail(403, { error: 'forbidden' });
+
+		const id = parseInt(params.id, 10);
+		if (isNaN(id)) error(404, 'project not found');
+
+		const reviewerDbUser = await getDbUser(locals.user.sub);
+		if (!reviewerDbUser) return fail(403, { error: 'forbidden' });
+
+		const [project] = await db
+			.select()
+			.from(projects)
+			.where(eq(projects.id, id))
+			.limit(1);
+
+		if (!project) error(404, 'project not found');
+
+		if (project.userId === reviewerDbUser.id) {
+			return fail(403, { error: "you can't approve your own project" });
+		}
+
+		const [ownerUser] = await db.select().from(users).where(eq(users.id, project.userId)).limit(1);
+
+		const projectNames = (project.hackatimeProject ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+		const approvedSeconds = await getHackatimeSeconds(ownerUser, projectNames);
+
+		await db
+			.update(projects)
+			.set({ status: 'approved', approvedSeconds, updatedAt: new Date() })
 			.where(eq(projects.id, id));
 
 		return { success: true };

@@ -26,6 +26,12 @@
 		return page.url.pathname === href || page.url.pathname.startsWith(href + '/');
 	}
 
+	const userApprovedSeconds = $derived(page.data.userApprovedSeconds ?? 0);
+
+	function formatHours(seconds: number) {
+		return `${(seconds / 3600).toFixed(1)}h`;
+	}
+
 	let pressedHref = $state<string | null>(null);
 
 	function handlePress(href: string) {
@@ -81,6 +87,7 @@
 
 	<div class="bottom">
 		<div class="divider"></div>
+		<div class="hours-label">{formatHours(userApprovedSeconds)}</div>
 		<a href="/account" class="avatar" aria-label="account" draggable="false">
 			{#if page.data.user?.avatar_url}
 				<img src={page.data.user.avatar_url} alt="avatar" draggable="false" />
@@ -200,6 +207,14 @@
 		gap: max(11px, 1.5vh);
 		width: 100%;
 		padding-bottom: 4px;
+	}
+
+	.hours-label {
+		font-size: max(13px, 1.8vh);
+		font-weight: bold;
+		color: white;
+		letter-spacing: 0.04em;
+		text-align: center;
 	}
 
 	.avatar {

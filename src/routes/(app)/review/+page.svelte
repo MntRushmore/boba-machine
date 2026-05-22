@@ -24,46 +24,20 @@
 			<p>no projects pending review.</p>
 		</div>
 	{:else}
-		<div class="project-list">
+		<div class="project-table">
+			<div class="table-header">
+				<span class="col-name">project</span>
+				<span class="col-desc">description</span>
+				<span class="col-author">author</span>
+				<span class="col-submitted">submitted</span>
+			</div>
 			{#each data.submitted as project (project.id)}
-				<div class="project-row">
-					{#if project.screenshotUrl}
-						<img
-							src={project.screenshotUrl}
-							alt="{project.name} screenshot"
-							class="project-thumb"
-						/>
-					{:else}
-						<div class="project-thumb project-thumb-empty"></div>
-					{/if}
-					<div class="project-info">
-						<span class="project-name"
-							>{project.name}
-							<span class="project-submitter"
-								>by {project.submitterSlack ??
-									project.submitterName ??
-									project.submitterEmail ??
-									'unknown'}</span
-							></span
-						>
-						{#if project.description}
-							<p class="project-desc">{project.description}</p>
-						{/if}
-						<div class="project-links">
-							{#if project.repoUrl}
-								<a href={project.repoUrl} target="_blank" rel="noopener noreferrer" class="ext-link"
-									>repo</a
-								>
-							{/if}
-							{#if project.demoUrl}
-								<a href={project.demoUrl} target="_blank" rel="noopener noreferrer" class="ext-link"
-									>demo</a
-								>
-							{/if}
-						</div>
-					</div>
-					<a href="/projects/{project.id}" class="btn-view">view project</a>
-				</div>
+				<a href="/projects/{project.id}" class="table-row">
+					<span class="col-name">{project.name}</span>
+					<span class="col-desc">{project.description ?? '—'}</span>
+					<span class="col-author">{project.submitterSlack ?? project.submitterName ?? project.submitterEmail ?? 'unknown'}</span>
+					<span class="col-submitted">{new Date(project.updatedAt).toLocaleDateString()}</span>
+				</a>
 			{/each}
 		</div>
 	{/if}
@@ -104,108 +78,65 @@
 		margin: 0;
 	}
 
-	.project-list {
+	.project-table {
 		display: flex;
 		flex-direction: column;
-		gap: 0;
 		border: solid var(--border-width);
 		border-radius: var(--radius-card);
 		overflow: hidden;
 	}
 
-	.project-row {
-		display: flex;
+	.table-header,
+	.table-row {
+		display: grid;
+		grid-template-columns: 1.2fr 2fr 1fr 1fr;
 		align-items: center;
-		gap: 1.25rem;
-		padding: 1rem 1.25rem;
-		border-bottom: solid calc(var(--border-width) / 2)
-			color-mix(in srgb, var(--color-text) 10%, transparent);
+		padding: 0.6rem 1.25rem;
+		gap: 1rem;
 	}
 
-	.project-row:last-child {
+	.table-header {
+		font-size: 0.7rem;
+		font-weight: bold;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		color: var(--color-text-soft);
+		border-bottom: solid var(--border-width);
+	}
+
+	.table-row {
+		text-decoration: none;
+		color: var(--color-text);
+		border-bottom: solid calc(var(--border-width) / 2) color-mix(in srgb, var(--color-text) 10%, transparent);
+		transition: background 0.15s;
+	}
+
+	.table-row:last-child {
 		border-bottom: none;
 	}
 
-	.project-thumb {
-		width: 5rem;
-		height: 3.5rem;
-		object-fit: cover;
-		border-radius: calc(var(--radius-card) / 2);
-		flex-shrink: 0;
+	.table-row:hover {
+		background: color-mix(in srgb, var(--color-text) 5%, transparent);
 	}
 
-	.project-thumb-empty {
-		background: #2a2a2a;
+	.table-row {
+		font-size: 0.9rem;
 	}
 
-	.project-info {
-		display: flex;
-		flex-direction: column;
-		gap: 0.2rem;
-		flex: 1;
-		min-width: 0;
-	}
-
-	.project-name {
-		font-weight: 700;
-		font-size: 1.1rem;
-	}
-
-	.project-submitter {
-		font-size: 1rem;
-		font-weight: 400;
-		color: #888;
-	}
-
-	.project-desc {
-		font-size: 0.85rem;
-		color: var(--color-text-soft);
-		margin: 0.1rem 0 0;
+	.col-name {
+		font-weight: 600;
 		overflow: hidden;
 		white-space: nowrap;
 		text-overflow: ellipsis;
 	}
 
-	.project-links {
-		display: flex;
-		gap: 0.75rem;
-		margin-top: 0.2rem;
-	}
-
-	.ext-link {
-		font-size: 0.75rem;
-		color: var(--rail-label);
-		text-decoration: none;
-		text-transform: uppercase;
-		letter-spacing: 0.06em;
-	}
-
-	.ext-link:hover {
-		color: var(--color-text);
-	}
-
-	.btn-view {
-		flex-shrink: 0;
-		font-size: 0.8rem;
-		font-weight: bold;
-		text-transform: uppercase;
-		letter-spacing: 0.08em;
-		text-decoration: none;
-		border: solid var(--border-width) black;
-		border-radius: var(--radius-pill);
-		padding: 0.4rem 0.9rem;
-		color: var(--color-text);
-		background: var(--color-bg);
+	.col-desc,
+	.col-author,
+	.col-submitted {
+		color: var(--color-text-soft);
+		overflow: hidden;
 		white-space: nowrap;
-		transition:
-			0.3s color,
-			0.3s background-color,
-			0.3s border-color;
+		text-overflow: ellipsis;
 	}
 
-	.btn-view:hover {
-		background: var(--color-text);
-		color: var(--color-bg);
-		border-color: var(--color-text);
-	}
 </style>

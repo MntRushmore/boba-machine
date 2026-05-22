@@ -324,13 +324,24 @@
 		{/if}
 	</div>
 
-	{#if !isDraft && data.isReviewer}
+	{#if !isDraft && data.isReviewer && project.status !== 'approved'}
 	<div class="card card-right">
-		<span class="card-label">review</span>
-		<p class="danger-desc">send this project back to the submitter as a draft.</p>
-		<form method="POST" action="?/reject" use:enhance>
-			<button type="submit" class="btn-reject">reject</button>
-		</form>
+		{#if !data.isOwnProject && project.status !== 'approved'}
+			<span class="card-label">approve</span>
+			<p class="danger-desc">approve this project and credit the submitter's hours.</p>
+			<form method="POST" action="?/approve" use:enhance>
+				<button type="submit" class="btn-approve">approve</button>
+			</form>
+		{/if}
+		{#if project.status !== 'approved'}
+		<div class="danger-section" class:has-top={!data.isOwnProject}>
+			<span class="card-label">reject</span>
+			<p class="danger-desc">send this project back to the submitter as a draft.</p>
+			<form method="POST" action="?/reject" use:enhance>
+				<button type="submit" class="btn-reject">reject</button>
+			</form>
+		</div>
+		{/if}
 	</div>
 	{/if}
 
@@ -838,6 +849,39 @@
 	.btn-delete:hover {
 		background: #c96a6a;
 		color: white;
+	}
+
+	.btn-approve {
+		font-size: 0.85rem;
+		font-weight: bold;
+		border-radius: var(--radius-pill);
+		padding: 0.45rem 0.9rem;
+		cursor: pointer;
+		border: solid var(--border-width) #6abf6a;
+		font-family: inherit;
+		background: transparent;
+		color: #6abf6a;
+		width: 100%;
+		transition:
+			0.3s color,
+			0.3s background-color;
+	}
+
+	.btn-approve:hover {
+		background: #6abf6a;
+		color: black;
+	}
+
+	.danger-section {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.danger-section.has-top {
+		margin-top: 1.25rem;
+		padding-top: 1.25rem;
+		border-top: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent);
 	}
 
 	.btn-reject {
