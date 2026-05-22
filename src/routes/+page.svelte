@@ -83,7 +83,7 @@
 
 <header>
 	<button
-		class="bordered nav"
+		class="bordered nav-btn"
 		class:nav-active={activeNav === 'landing'}
 		onclick={() => scrollToAnchor('home')}
 	>
@@ -91,7 +91,7 @@
 		<span>home</span>
 	</button>
 	<button
-		class="bordered nav"
+		class="bordered nav-btn"
 		class:nav-active={activeNav === 'about'}
 		onclick={() => scrollToAnchor('about')}
 	>
@@ -99,7 +99,7 @@
 		<span>about</span>
 	</button>
 	<button
-		class="bordered nav"
+		class="bordered nav-btn"
 		class:nav-active={activeNav === 'faq'}
 		onclick={() => scrollToAnchor('faq')}
 	>

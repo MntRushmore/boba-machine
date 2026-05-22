@@ -222,6 +222,16 @@ header {
 .nav {
 	font-weight: bold;
 	font-size: 1rem;
+	min-height: 3rem;
+	min-width: fit-content;
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.nav-btn {
+	font-weight: bold;
+	font-size: 1rem;
 	padding: 0.6rem 1.1rem;
 	min-height: 3rem;
 	min-width: fit-content;
@@ -234,7 +244,7 @@ header {
 		border-color var(--transition-med);
 }
 
-.nav img {
+.nav-btn img {
 	transition: filter var(--transition-med);
 }
 

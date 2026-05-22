@@ -76,7 +76,7 @@
 			>
 				<Keycap
 					size="max(55px, 9vh)"
-					color={active ? 'var(--keycap-border)' : 'var(--keycap-color)'}
+					color={active ? 'var(--keycap-active, var(--keycap-border))' : 'var(--keycap-color)'}
 					dark={active}
 					pressed={pressedHref === item.href}
 				>
