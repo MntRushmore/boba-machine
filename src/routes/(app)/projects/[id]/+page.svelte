@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { formatHours } from '$lib/format';
 
 	let { data, form } = $props();
 
@@ -88,14 +89,6 @@
 		} finally {
 			hackatimeLoading = false;
 		}
-	}
-
-	function formatHours(seconds: number) {
-		const h = Math.floor(seconds / 3600);
-		const m = Math.floor((seconds % 3600) / 60);
-		if (h === 0) return `${m}m`;
-		if (m === 0) return `${h}h`;
-		return `${h}h ${m}m`;
 	}
 
 	function handleFilePick(e: Event) {

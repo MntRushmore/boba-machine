@@ -92,3 +92,43 @@ export const projectEvents = pgTable('project_events', {
 	internalNote: text('internal_note'),
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().default(sql`now()`)
 });
+
+export const shopCategories = pgTable('shop_categories', {
+	id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+	name: text('name').notNull(),
+	slug: text('slug').notNull().unique(),
+	description: text('description'),
+	sortOrder: integer('sort_order').notNull().default(0),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().default(sql`now()`)
+});
+
+export const shopItems = pgTable('shop_items', {
+	id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+	categoryId: integer('category_id')
+		.notNull()
+		.references(() => shopCategories.id, { onDelete: 'cascade' }),
+	name: text('name').notNull(),
+	description: text('description'),
+	priceSeconds: integer('price_seconds').notNull(),
+	imageUrl: text('image_url'),
+	stock: integer('stock').notNull().default(-1), // -1 = unlimited
+	available: boolean('available').notNull().default(true),
+	options: text('options').notNull().default('[]'), // JSON: Array<{label: string, choices: string[]}>
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().default(sql`now()`),
+	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().default(sql`now()`)
+});
+
+export const shopOrders = pgTable('shop_orders', {
+	id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+	userId: uuid('user_id')
+		.notNull()
+		.references(() => users.id, { onDelete: 'cascade' }),
+	itemId: integer('item_id')
+		.notNull()
+		.references(() => shopItems.id, { onDelete: 'restrict' }),
+	priceSeconds: integer('price_seconds').notNull(),
+	status: text('status').notNull().default('ordered'), // ordered | packed | shipped | delivered | refunded
+	selectedOptions: text('selected_options').notNull().default('{}'), // JSON: Record<string, string>
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().default(sql`now()`),
+	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().default(sql`now()`)
+});

@@ -3,7 +3,7 @@ import { TOKEN_ENCRYPTION_KEY } from '$env/static/private';
 import { dev } from '$app/environment';
 import { db } from '$lib/server/db';
 import { projects, users, projectEvents, projectApprovals } from '$lib/server/db/schema';
-import { eq, and, asc, desc, count, notExists, gt, sql } from 'drizzle-orm';
+import { eq, and, asc, desc, count, notExists, gt, sql, sum } from 'drizzle-orm';
 import { uploadImageBlob } from '$lib/server/cdn';
 import { decryptToken } from '$lib/server/session';
 
@@ -354,9 +354,19 @@ export const actions = {
 			return fail(403, { error: "you can't approve your own project" });
 		}
 
+		// Sum previously approved seconds for this project (all prior approved submissions)
+		const [prevRow] = await db
+			.select({ total: sum(projectApprovals.approvedSeconds) })
+			.from(projectApprovals)
+			.where(and(eq(projectApprovals.projectId, id), eq(projectApprovals.status, 'approved')));
+		const previousApprovedSeconds = Number(prevRow?.total ?? 0);
+
+		// Only credit the delta — new hours since the last approval
+		const maxNewSeconds = latestApproval.submittedSeconds - previousApprovedSeconds;
+
 		const approvedHours = approvedHoursRaw !== null && approvedHoursRaw !== ''
 			? Number(approvedHoursRaw)
-			: latestApproval.submittedSeconds / 3600;
+			: maxNewSeconds / 3600;
 
 		if (isNaN(approvedHours) || approvedHours <= 0) {
 			return fail(400, { error: 'approved hours must be greater than 0' });
@@ -364,8 +374,8 @@ export const actions = {
 
 		const approvedSeconds = Math.floor(approvedHours * 3600);
 
-		if (approvedSeconds > latestApproval.submittedSeconds) {
-			return fail(400, { error: 'approved hours cannot exceed submitted hours' });
+		if (approvedSeconds > maxNewSeconds) {
+			return fail(400, { error: `approved hours cannot exceed new hours since last approval (${(maxNewSeconds / 3600).toFixed(2)}h)` });
 		}
 
 		await db
