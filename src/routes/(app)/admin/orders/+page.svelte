@@ -144,10 +144,10 @@
 
 	.back-link {
 		font-size: 0.85rem;
-		color: #8a8f99;
+		color: var(--color-text-soft);
 		text-decoration: none;
 	}
-	.back-link:hover { color: #cdd0d6; }
+	.back-link:hover { color: var(--color-text); }
 
 	h1 {
 		font-size: clamp(1.4rem, 2.5vw, 2rem);
@@ -158,17 +158,17 @@
 
 	.sub {
 		font-size: 0.85rem;
-		color: #8a8f99;
+		color: var(--color-text-soft);
 		margin: 0;
 	}
 
 	.search-input {
 		margin-top: 0.5rem;
-		background: #0d0f12;
-		border: 1px solid #2a2f38;
+		background: var(--color-bg-soft);
+		border: 1px solid color-mix(in srgb, var(--color-text) 20%, transparent);
 		border-radius: 6px;
 		padding: 0.35rem 0.65rem;
-		color: #cdd0d6;
+		color: var(--color-text);
 		font-size: 0.82rem;
 		font-family: inherit;
 		width: 180px;
@@ -176,11 +176,12 @@
 
 	.search-input:focus {
 		outline: none;
-		border-color: #3a3f48;
+		border-color: color-mix(in srgb, var(--color-text) 40%, transparent);
 	}
 
 	.search-input::placeholder {
-		color: #3a3f48;
+		color: var(--color-text-soft);
+		opacity: 0.5;
 	}
 
 	.form-error {
@@ -190,7 +191,7 @@
 	}
 
 	.empty {
-		color: #555c6a;
+		color: var(--color-text-soft);
 		font-size: 0.9rem;
 	}
 
@@ -205,7 +206,7 @@
 		align-items: flex-start;
 		gap: 1rem;
 		padding: 0.85rem 1rem;
-		border: 1px solid #2a2f38;
+		border: 1px solid color-mix(in srgb, var(--color-text) 20%, transparent);
 		border-radius: 8px;
 		flex-wrap: wrap;
 	}
@@ -232,7 +233,7 @@
 	}
 
 	.avatar-placeholder {
-		background: #2a2f38;
+		background: color-mix(in srgb, var(--color-text) 20%, transparent);
 	}
 
 	.user-details {
@@ -243,19 +244,20 @@
 
 	.username {
 		font-size: 0.85rem;
-		color: #cdd0d6;
+		color: var(--color-text);
 		font-weight: 500;
 	}
 
 	.address {
 		font-size: 0.73rem;
-		color: #8a8f99;
+		color: var(--color-text-soft);
 		line-height: 1.3;
 		max-width: 180px;
 	}
 
 	.no-address {
-		color: #3a3f48;
+		color: var(--color-text-soft);
+		opacity: 0.4;
 		font-style: italic;
 	}
 
@@ -270,12 +272,13 @@
 	.item-name {
 		font-size: 0.9rem;
 		font-weight: 600;
-		color: #cdd0d6;
+		color: var(--color-text);
 	}
 
 	.item-cat {
 		font-size: 0.75rem;
-		color: #555c6a;
+		color: var(--color-text-soft);
+		opacity: 0.7;
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 	}
@@ -290,14 +293,14 @@
 	.opt-tag {
 		font-size: 0.73rem;
 		padding: 0.1rem 0.4rem;
-		background: #0d0f12;
-		border: 1px solid #2a2f38;
+		background: var(--color-bg-soft);
+		border: 1px solid color-mix(in srgb, var(--color-text) 20%, transparent);
 		border-radius: 4px;
-		color: #8a8f99;
+		color: var(--color-text-soft);
 	}
 
 	.opt-label {
-		color: #555c6a;
+		opacity: 0.6;
 	}
 
 	.order-meta {
@@ -311,21 +314,22 @@
 		font-size: 0.82rem;
 		font-weight: 600;
 		padding: 0.15rem 0.4rem;
-		background: #0d0f12;
-		border: 1px solid #2a2f38;
+		background: var(--color-bg-soft);
+		border: 1px solid color-mix(in srgb, var(--color-text) 20%, transparent);
 		border-radius: 4px;
-		color: #cdd0d6;
+		color: var(--color-text);
 	}
 
 	.date {
 		font-size: 0.8rem;
-		color: #555c6a;
+		color: var(--color-text-soft);
 		white-space: nowrap;
 	}
 
 	.order-id {
 		font-size: 0.75rem;
-		color: #3a3f48;
+		color: var(--color-text-soft);
+		opacity: 0.4;
 		font-family: monospace;
 	}
 
@@ -355,11 +359,11 @@
 	}
 
 	.status-select {
-		background: #0d0f12;
-		border: 1px solid #2a2f38;
+		background: var(--color-bg-soft);
+		border: 1px solid color-mix(in srgb, var(--color-text) 20%, transparent);
 		border-radius: 5px;
 		padding: 0.3rem 0.5rem;
-		color: #cdd0d6;
+		color: var(--color-text);
 		font-size: 0.8rem;
 		font-family: inherit;
 		cursor: pointer;
@@ -367,40 +371,39 @@
 
 	.status-select:focus {
 		outline: none;
-		border-color: #3a3f48;
+		border-color: color-mix(in srgb, var(--color-text) 40%, transparent);
 	}
 
 	.btn-update {
 		font-size: 0.78rem;
 		padding: 0.3rem 0.6rem;
 		border-radius: 5px;
-		border: 1px solid #2a2f38;
-		background: #1a1f28;
-		color: #cdd0d6;
+		border: 1px solid color-mix(in srgb, var(--color-text) 20%, transparent);
+		background: var(--color-bg-soft);
+		color: var(--color-text);
 		cursor: pointer;
 		font-family: inherit;
 		white-space: nowrap;
 	}
 
 	.btn-update:hover {
-		border-color: #3a3f48;
-		background: #1e242e;
+		border-color: color-mix(in srgb, var(--color-text) 40%, transparent);
 	}
 
 	.btn-refund {
 		font-size: 0.78rem;
 		padding: 0.3rem 0.6rem;
 		border-radius: 5px;
-		border: 1px solid #4a2a2a;
-		background: #2e1a1a;
-		color: #bb6d6d;
+		border: 1px solid color-mix(in srgb, #ef4444 35%, transparent);
+		background: color-mix(in srgb, #ef4444 15%, var(--color-bg));
+		color: #ef4444;
 		cursor: pointer;
 		font-family: inherit;
 		white-space: nowrap;
 	}
 
 	.btn-refund:hover {
-		background: #3a1e1e;
+		background: color-mix(in srgb, #ef4444 25%, var(--color-bg));
 	}
 
 	.refunded-badge {
@@ -408,6 +411,6 @@
 		align-items: center;
 		gap: 0.4rem;
 		font-size: 0.78rem;
-		color: #8a8f99;
+		color: var(--color-text-soft);
 	}
 </style>

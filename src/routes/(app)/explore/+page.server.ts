@@ -1,24 +1,22 @@
 import { db } from '$lib/server/db';
-import { projects, users, projectApprovals } from '$lib/server/db/schema';
-import { eq, sum } from 'drizzle-orm';
+import { projects, users, projectExploreSnapshots } from '$lib/server/db/schema';
+import { eq } from 'drizzle-orm';
 
 export async function load() {
 	const rows = await db
 		.select({
-			id: projects.id,
-			name: projects.name,
-			description: projects.description,
-			screenshotUrl: projects.screenshotUrl,
-			demoUrl: projects.demoUrl,
-			totalApprovedSeconds: sum(projectApprovals.approvedSeconds),
+			id: projectExploreSnapshots.projectId,
+			name: projectExploreSnapshots.name,
+			description: projectExploreSnapshots.description,
+			screenshotUrl: projectExploreSnapshots.screenshotUrl,
+			demoUrl: projectExploreSnapshots.demoUrl,
+			totalApprovedSeconds: projectExploreSnapshots.totalApprovedSeconds,
 			authorName: users.slackDisplayName,
 			authorNickname: users.nickname,
 		})
-		.from(projectApprovals)
-		.innerJoin(projects, eq(projectApprovals.projectId, projects.id))
-		.innerJoin(users, eq(projects.userId, users.id))
-		.where(eq(projectApprovals.status, 'approved'))
-		.groupBy(projects.id, users.id);
+		.from(projectExploreSnapshots)
+		.innerJoin(projects, eq(projectExploreSnapshots.projectId, projects.id))
+		.innerJoin(users, eq(projects.userId, users.id));
 
-	return { projects: rows.map(r => ({ ...r, totalApprovedSeconds: Number(r.totalApprovedSeconds ?? 0) })) };
+	return { projects: rows };
 }

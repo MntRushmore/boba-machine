@@ -93,6 +93,16 @@ export const projectEvents = pgTable('project_events', {
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().default(sql`now()`)
 });
 
+export const projectExploreSnapshots = pgTable('project_explore_snapshots', {
+	projectId: integer('project_id').primaryKey().references(() => projects.id, { onDelete: 'cascade' }),
+	name: text('name').notNull(),
+	description: text('description'),
+	screenshotUrl: text('screenshot_url'),
+	demoUrl: text('demo_url'),
+	totalApprovedSeconds: integer('total_approved_seconds').notNull().default(0),
+	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().default(sql`now()`)
+});
+
 export const shopCategories = pgTable('shop_categories', {
 	id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
 	name: text('name').notNull(),

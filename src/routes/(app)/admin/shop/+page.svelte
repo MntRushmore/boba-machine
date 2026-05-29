@@ -176,10 +176,10 @@
 
 	.back-link {
 		font-size: 0.85rem;
-		color: #8a8f99;
+		color: var(--color-text-soft);
 		text-decoration: none;
 	}
-	.back-link:hover { color: #cdd0d6; }
+	.back-link:hover { color: var(--color-text); }
 
 	h1 {
 		font-size: clamp(1.4rem, 2.5vw, 2rem);
@@ -214,13 +214,13 @@
 		font-size: 0.75rem;
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
-		color: #8a8f99;
+		color: var(--color-text-soft);
 		font-weight: bold;
 		margin: 0 0 0.5rem;
 	}
 
 	.row {
-		border: 1px solid #2a2f38;
+		border: 1px solid color-mix(in srgb, var(--color-text) 20%, transparent);
 		border-radius: 8px;
 		padding: 0.75rem 1rem;
 		display: flex;
@@ -243,17 +243,18 @@
 	.row-name {
 		font-size: 0.95rem;
 		font-weight: 600;
-		color: #cdd0d6;
+		color: var(--color-text);
 	}
 
 	.row-desc {
 		font-size: 0.8rem;
-		color: #8a8f99;
+		color: var(--color-text-soft);
 	}
 
 	.row-meta {
 		font-size: 0.75rem;
-		color: #555c6a;
+		color: var(--color-text-soft);
+		opacity: 0.6;
 		font-family: monospace;
 	}
 
@@ -277,11 +278,11 @@
 	}
 
 	.input {
-		background: #0d0f12;
-		border: 1px solid #2a2f38;
+		background: var(--color-bg-soft);
+		border: 1px solid color-mix(in srgb, var(--color-text) 20%, transparent);
 		border-radius: 6px;
 		padding: 0.4rem 0.6rem;
-		color: #cdd0d6;
+		color: var(--color-text);
 		font-size: 0.85rem;
 		font-family: inherit;
 		width: 100%;
@@ -290,7 +291,7 @@
 
 	.input:focus {
 		outline: none;
-		border-color: #3a3f48;
+		border-color: color-mix(in srgb, var(--color-text) 40%, transparent);
 	}
 
 	.input-sm { max-width: 120px; }
@@ -301,7 +302,7 @@
 		align-items: center;
 		gap: 0.4rem;
 		font-size: 0.85rem;
-		color: #8a8f99;
+		color: var(--color-text-soft);
 		cursor: pointer;
 	}
 
@@ -315,16 +316,16 @@
 		white-space: nowrap;
 	}
 
-	.btn-edit { background: #1a1f28; border-color: #2a2f38; color: #cdd0d6; }
-	.btn-edit:hover { border-color: #3a3f48; background: #1e242e; }
-	.btn-save { background: #1a2e1a; border-color: #2a4a2a; color: #6dbb6d; }
-	.btn-save:hover { background: #1e3a1e; }
-	.btn-cancel { background: #1a1f28; border-color: #2a2f38; color: #8a8f99; }
-	.btn-cancel:hover { color: #cdd0d6; }
-	.btn-delete { background: #2e1a1a; border-color: #4a2a2a; color: #bb6d6d; }
-	.btn-delete:hover { background: #3a1e1e; }
-	.btn-add { background: #1a1f28; border-color: #2a2f38; color: #cdd0d6; align-self: flex-start; }
-	.btn-add:hover { border-color: #3a3f48; background: #1e242e; }
+	.btn-edit { background: var(--color-bg-soft); border-color: color-mix(in srgb, var(--color-text) 20%, transparent); color: var(--color-text); }
+	.btn-edit:hover { border-color: color-mix(in srgb, var(--color-text) 40%, transparent); }
+	.btn-save { background: color-mix(in srgb, #22c55e 15%, var(--color-bg)); border-color: color-mix(in srgb, #22c55e 35%, transparent); color: #22c55e; }
+	.btn-save:hover { background: color-mix(in srgb, #22c55e 25%, var(--color-bg)); }
+	.btn-cancel { background: var(--color-bg-soft); border-color: color-mix(in srgb, var(--color-text) 20%, transparent); color: var(--color-text-soft); }
+	.btn-cancel:hover { color: var(--color-text); }
+	.btn-delete { background: color-mix(in srgb, #ef4444 15%, var(--color-bg)); border-color: color-mix(in srgb, #ef4444 35%, transparent); color: #ef4444; }
+	.btn-delete:hover { background: color-mix(in srgb, #ef4444 25%, var(--color-bg)); }
+	.btn-add { background: var(--color-bg-soft); border-color: color-mix(in srgb, var(--color-text) 20%, transparent); color: var(--color-text); align-self: flex-start; }
+	.btn-add:hover { border-color: color-mix(in srgb, var(--color-text) 40%, transparent); }
 
 	.add-form {
 		display: flex;
@@ -332,14 +333,15 @@
 		gap: 0.4rem;
 		margin-top: 0.75rem;
 		padding-top: 0.75rem;
-		border-top: 1px solid #1a1f28;
+		border-top: 1px solid color-mix(in srgb, var(--color-text) 15%, transparent);
 	}
 
 	.add-title {
 		font-size: 0.75rem;
 		text-transform: uppercase;
 		letter-spacing: 0.08em;
-		color: #555c6a;
+		color: var(--color-text-soft);
+		opacity: 0.7;
 		margin: 0 0 0.25rem;
 	}
 
@@ -354,12 +356,13 @@
 		font-size: 0.72rem;
 		text-transform: uppercase;
 		letter-spacing: 0.08em;
-		color: #555c6a;
+		color: var(--color-text-soft);
+		opacity: 0.7;
 		padding-left: 0.25rem;
 	}
 
 	.empty {
-		color: #555c6a;
+		color: var(--color-text-soft);
 		font-size: 0.9rem;
 		margin: 0;
 	}

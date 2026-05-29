@@ -2,8 +2,8 @@ import { redirect, error, fail } from '@sveltejs/kit';
 import { TOKEN_ENCRYPTION_KEY } from '$env/static/private';
 import { dev } from '$app/environment';
 import { db } from '$lib/server/db';
-import { projects, users, projectEvents, projectApprovals } from '$lib/server/db/schema';
-import { eq, and, asc, desc, count, notExists, gt, sql } from 'drizzle-orm';
+import { projects, users, projectEvents, projectApprovals, projectExploreSnapshots } from '$lib/server/db/schema';
+import { eq, and, asc, desc, count, notExists, gt, sql, sum } from 'drizzle-orm';
 import { uploadImageBlob } from '$lib/server/cdn';
 import { decryptToken } from '$lib/server/session';
 
@@ -389,6 +389,39 @@ export const actions = {
 			.update(projectApprovals)
 			.set({ status: 'approved', reviewerId: reviewerDbUser.id, approvedSeconds, publicMessage: message, internalNote, reviewedAt: new Date() })
 			.where(eq(projectApprovals.id, latestApproval.id));
+
+		// Upsert explore snapshot with project state at time of approval
+		const [[projectData], [totalRow]] = await Promise.all([
+			db.select().from(projects).where(eq(projects.id, id)).limit(1),
+			db.select({ total: sum(projectApprovals.approvedSeconds) })
+				.from(projectApprovals)
+				.where(and(eq(projectApprovals.projectId, id), eq(projectApprovals.status, 'approved')))
+		]);
+
+		if (projectData) {
+			const totalApprovedSeconds = Number(totalRow?.total ?? 0);
+			await db.insert(projectExploreSnapshots)
+				.values({
+					projectId: id,
+					name: projectData.name,
+					description: projectData.description,
+					screenshotUrl: projectData.screenshotUrl,
+					demoUrl: projectData.demoUrl,
+					totalApprovedSeconds,
+					updatedAt: new Date()
+				})
+				.onConflictDoUpdate({
+					target: projectExploreSnapshots.projectId,
+					set: {
+						name: projectData.name,
+						description: projectData.description,
+						screenshotUrl: projectData.screenshotUrl,
+						demoUrl: projectData.demoUrl,
+						totalApprovedSeconds,
+						updatedAt: new Date()
+					}
+				});
+		}
 
 		return { success: true };
 	},

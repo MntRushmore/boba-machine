@@ -314,9 +314,10 @@
 
 	.item-img-wrap {
 		width: 100%;
-		height: 140px;
+		height: 240px;
 		flex-shrink: 0;
 		background: var(--color-bg-soft);
+		border-bottom: calc(var(--border-width) / 2) solid;
 	}
 
 	.item-img {
