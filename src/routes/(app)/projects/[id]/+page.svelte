@@ -40,6 +40,53 @@
 		return `${hrs}h ${mins}m`;
 	});
 
+	function ensureProtocol(e: Event) {
+		const input = e.currentTarget as HTMLInputElement;
+		const val = input.value.trim();
+		if (val && !val.startsWith('http://') && !val.startsWith('https://')) {
+			input.value = 'https://' + val;
+		}
+	}
+
+	const CHECKLIST_ITEMS = [
+		'My project is open-source and its repository is publicly cloneable with clean commits',
+		'I have a detailed README.md that was not written by an AI',
+		'My project is experienceable without needing to build it from source'
+	];
+
+	let showCheckModal = $state(false);
+	let checkModalAction = $state<'submit' | 'reship'>('submit');
+	let modalChecks = $state([false, false, false]);
+	let modalAiDeclaration = $state('');
+	let actualSubmitBtnEl = $state<HTMLButtonElement | null>(null);
+	let reshipFormEl = $state<HTMLFormElement | null>(null);
+	let saveFormAiInput = $state<HTMLInputElement | null>(null);
+	let reshipAiInput = $state<HTMLInputElement | null>(null);
+
+	const allChecked = $derived(modalChecks.every(Boolean) && modalAiDeclaration.trim().length > 0);
+
+	function openCheckModal(action: 'submit' | 'reship') {
+		modalChecks = [false, false, false];
+		modalAiDeclaration = '';
+		checkModalAction = action;
+		showCheckModal = true;
+	}
+
+	function closeCheckModal() {
+		showCheckModal = false;
+	}
+
+	function confirmCheckModal() {
+		showCheckModal = false;
+		if (checkModalAction === 'submit') {
+			if (saveFormAiInput) saveFormAiInput.value = modalAiDeclaration;
+			actualSubmitBtnEl?.click();
+		} else {
+			if (reshipAiInput) reshipAiInput.value = modalAiDeclaration;
+			reshipFormEl?.requestSubmit();
+		}
+	}
+
 	function formatDate(d: Date | string) {
 		const date = new Date(d);
 		return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -205,7 +252,7 @@
 
 <div class="bento">
 	<div class="card card-wide" class:card-full={!isDraft && !canReship}>
-		{#if derivedStatus}
+		{#if derivedStatus && derivedStatus !== 'approved'}
 			<div class="card-header">
 				<span class="status-badge status-{derivedStatus}">{derivedStatus}</span>
 			</div>
@@ -257,6 +304,7 @@
 							name="repo_url"
 							value={project.repoUrl ?? ''}
 							placeholder="https://github.com/..."
+							onblur={ensureProtocol}
 						/>
 					</label>
 					<label class="edit-field">
@@ -267,6 +315,7 @@
 							name="demo_url"
 							value={project.demoUrl ?? ''}
 							placeholder="https://..."
+							onblur={ensureProtocol}
 						/>
 					</label>
 					<div class="edit-field edit-field-full">
@@ -308,6 +357,8 @@
 				<div class="edit-actions">
 					<button type="submit" class="btn-save">save</button>
 				</div>
+				<input type="hidden" name="ai_declaration" bind:this={saveFormAiInput} />
+				<button type="submit" formaction="?/submit" style="display:none" aria-hidden="true" tabindex="-1" bind:this={actualSubmitBtnEl}></button>
 			</form>
 		{:else}
 			<div class="field-list">
@@ -363,7 +414,7 @@
 		{#if form?.error && !form?.success}
 			<p class="form-error">{form.error}</p>
 		{/if}
-		<button type="submit" form="save-form" formaction="?/submit" class="btn-submit">submit for review</button>
+		<button type="button" class="btn-submit" onclick={() => openCheckModal('submit')}>submit for review</button>
 
 		<div class="danger-section has-top">
 			<span class="card-label">danger zone</span>
@@ -383,8 +434,9 @@
 			{#if form?.error && !form?.success}
 				<p class="form-error">{form.error}</p>
 			{/if}
-			<form method="POST" action="?/reship" use:enhance>
-				<button type="submit" class="btn-submit">ship again</button>
+			<form method="POST" action="?/reship" use:enhance bind:this={reshipFormEl}>
+				<input type="hidden" name="ai_declaration" bind:this={reshipAiInput} />
+				<button type="button" class="btn-submit" onclick={() => openCheckModal('reship')}>ship again</button>
 			</form>
 		{:else}
 			<p class="danger-desc">keep working! you need at least 1 new hour since your last submission{data.availableSeconds > 0 ? ` (you have ${formatHours(data.availableSeconds)})` : ''}.</p>
@@ -509,6 +561,41 @@
 		<button type="submit" class={reviewActionClass}>{reviewActionLabel}</button>
 	</form>
 	{/if}
+</div>
+{/if}
+
+{#if showCheckModal}
+<div class="modal-backdrop" role="dialog" aria-modal="true" aria-label="submission checklist">
+	<div class="modal-box">
+		<h2 class="modal-title">before you {checkModalAction === 'submit' ? 'submit' : 'reship'}</h2>
+		<p class="modal-desc">please confirm the following:</p>
+		<div class="checklist">
+			{#each CHECKLIST_ITEMS as item, i (i)}
+			<label class="check-item" class:checked={modalChecks[i]}>
+				<input type="checkbox" bind:checked={modalChecks[i]} class="check-input" />
+				<span class="check-label">{item}</span>
+			</label>
+			{/each}
+		</div>
+		<label class="ai-label">
+			<span class="ai-label-text">AI declaration <span class="req">*</span></span>
+			<span class="ai-label-hint">explain if and how you used AI in building this project</span>
+			<textarea
+				class="ai-textarea"
+				placeholder="e.g. I used GitHub Copilot for autocomplete and ChatGPT to help debug a few issues, but all architecture and design decisions were made by me."
+				bind:value={modalAiDeclaration}
+			></textarea>
+		</label>
+		<div class="modal-actions">
+			<button type="button" class="btn-modal-cancel" onclick={closeCheckModal}>cancel</button>
+			<button
+				type="button"
+				class="btn-modal-confirm"
+				onclick={confirmCheckModal}
+				disabled={!allChecked}
+			>{checkModalAction === 'submit' ? 'submit for review' : 'ship again'}</button>
+		</div>
+	</div>
 </div>
 {/if}
 
@@ -1277,5 +1364,167 @@
 	.review-hours-hint {
 		font-size: 0.7rem;
 		color: var(--rail-label);
+	}
+
+	/* submission checklist modal */
+
+	.modal-backdrop {
+		position: fixed;
+		inset: 0;
+		z-index: 50;
+		background: rgba(0, 0, 0, 0.6);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		backdrop-filter: blur(4px);
+	}
+
+	.modal-box {
+		background: var(--color-bg);
+		border: solid var(--border-width);
+		border-radius: var(--radius-card);
+		padding: clamp(1.5rem, 3vw, 2.5rem);
+		width: min(540px, 90vw);
+		max-height: 90vh;
+		overflow-y: auto;
+		display: flex;
+		flex-direction: column;
+		gap: 1.25rem;
+	}
+
+	.modal-title {
+		font-size: clamp(1.4rem, 2vw, 1.8rem);
+		font-weight: bold;
+		letter-spacing: -0.03em;
+		margin: 0;
+	}
+
+	.modal-desc {
+		font-size: 0.85rem;
+		color: var(--color-text-soft);
+		margin: 0;
+	}
+
+	.checklist {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.check-item {
+		display: flex;
+		align-items: flex-start;
+		gap: 0.65rem;
+		padding: 0.75rem;
+		border: solid calc(var(--border-width) / 2);
+		border-radius: calc(var(--radius-card) / 1.5);
+		cursor: pointer;
+		transition: border-color 0.12s;
+	}
+
+	.check-item.checked {
+		border-color: var(--color-text);
+	}
+
+	.check-input {
+		flex-shrink: 0;
+		margin-top: 0.15rem;
+		width: 1rem;
+		height: 1rem;
+		cursor: pointer;
+		accent-color: var(--color-text);
+	}
+
+	.check-label {
+		font-size: 0.9rem;
+		line-height: 1.4;
+	}
+
+	.ai-label {
+		display: flex;
+		flex-direction: column;
+		gap: 0.3rem;
+	}
+
+	.ai-label-text {
+		font-size: 0.7rem;
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		color: var(--rail-label);
+		font-weight: 500;
+	}
+
+	.ai-label-hint {
+		font-size: 0.8rem;
+		color: var(--color-text-soft);
+	}
+
+	.ai-textarea {
+		background: transparent;
+		border: solid calc(var(--border-width) / 2);
+		border-radius: calc(var(--radius-card) / 2);
+		padding: 0.45rem 0.65rem;
+		font-size: 0.9rem;
+		font-family: inherit;
+		color: var(--color-text);
+		width: 100%;
+		box-sizing: border-box;
+		resize: vertical;
+		min-height: 5rem;
+		margin-top: 0.15rem;
+	}
+
+	.ai-textarea:focus {
+		outline: none;
+		border-color: var(--color-text);
+	}
+
+	.ai-textarea::placeholder {
+		color: var(--rail-label);
+	}
+
+	.modal-actions {
+		display: flex;
+		gap: 0.6rem;
+		justify-content: flex-end;
+	}
+
+	.btn-modal-cancel {
+		font-size: 0.85rem;
+		font-weight: bold;
+		border-radius: var(--radius-pill);
+		padding: 0.45rem 0.9rem;
+		cursor: pointer;
+		border: solid var(--border-width);
+		font-family: inherit;
+		background: transparent;
+		color: var(--color-text-soft);
+		transition: color 0.1s, border-color 0.1s;
+	}
+
+	.btn-modal-cancel:hover {
+		color: var(--color-text);
+		border-color: var(--color-text);
+	}
+
+	.btn-modal-confirm {
+		font-size: 0.85rem;
+		font-weight: bold;
+		border-radius: var(--radius-pill);
+		padding: 0.45rem 0.9rem;
+		cursor: pointer;
+		border: solid var(--border-width) var(--color-text);
+		font-family: inherit;
+		background: var(--color-text);
+		color: var(--color-bg);
+	}
+
+	.btn-modal-confirm:disabled {
+		opacity: 0.35;
+		cursor: not-allowed;
+	}
+
+	.req {
+		color: #c96a6a;
 	}
 </style>

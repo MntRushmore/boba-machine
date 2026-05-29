@@ -228,17 +228,20 @@ export const actions = {
 			.set({ name, description, screenshotUrl, repoUrl, demoUrl, hackatimeProject, updatedAt: new Date() })
 			.where(eq(projects.id, id));
 
+		const aiDeclaration = (form.get('ai_declaration') as string)?.trim() || null;
+
 		await db.insert(projectApprovals).values({
 			projectId: id,
 			submittedById: dbUser.id,
 			submittedSeconds: totalSeconds,
-			status: 'pending'
+			status: 'pending',
+			aiDeclaration
 		});
 
 		return { success: true };
 	},
 
-	reship: async ({ locals, params }) => {
+	reship: async ({ request, locals, params }) => {
 		if (!locals.user) redirect(302, '/login');
 
 		const id = parseInt(params.id, 10);
@@ -268,11 +271,15 @@ export const actions = {
 			return fail(400, { error: `need at least 1 new hour since your last submission (you have ${mins}m of new work)` });
 		}
 
+		const reshipForm = await request.formData();
+		const aiDeclaration = (reshipForm.get('ai_declaration') as string)?.trim() || null;
+
 		await db.insert(projectApprovals).values({
 			projectId: id,
 			submittedById: dbUser.id,
 			submittedSeconds: currentSeconds,
-			status: 'pending'
+			status: 'pending',
+			aiDeclaration
 		});
 
 		return { success: true };

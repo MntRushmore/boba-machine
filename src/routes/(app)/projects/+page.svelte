@@ -29,6 +29,14 @@
 			closing = false;
 		}, CLOSE_MS);
 	}
+
+	function ensureProtocol(e: Event) {
+		const input = e.currentTarget as HTMLInputElement;
+		const val = input.value.trim();
+		if (val && !val.startsWith('http://') && !val.startsWith('https://')) {
+			input.value = 'https://' + val;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -129,11 +137,12 @@
 							type="url"
 							name="repo_url"
 							placeholder="https://github.com/..."
+							onblur={ensureProtocol}
 						/>
 					</label>
 					<label class="edit-field">
 						<span class="edit-field-label">demo url</span>
-						<input class="edit-input" type="url" name="demo_url" placeholder="https://..." />
+						<input class="edit-input" type="url" name="demo_url" placeholder="https://..." onblur={ensureProtocol} />
 					</label>
 				</div>
 				<div class="edit-actions">

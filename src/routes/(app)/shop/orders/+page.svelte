@@ -77,7 +77,6 @@
 		display: flex;
 		align-items: baseline;
 		justify-content: space-between;
-		margin-bottom: 2rem;
 		flex-wrap: wrap;
 		gap: 0.75rem;
 	}

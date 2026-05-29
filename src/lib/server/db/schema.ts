@@ -76,6 +76,7 @@ export const projectApprovals = pgTable('project_approvals', {
 	status: text('status').notNull().default('pending'),
 	publicMessage: text('public_message'),
 	internalNote: text('internal_note'),
+	aiDeclaration: text('ai_declaration'),
 	submittedAt: timestamp('submitted_at', { withTimezone: true }).notNull().default(sql`now()`),
 	reviewedAt: timestamp('reviewed_at', { withTimezone: true })
 });

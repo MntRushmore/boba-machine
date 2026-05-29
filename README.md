@@ -16,6 +16,13 @@
 - purchase accessories and other goodies from a shop
 - customize your macropad - coming soon!
 
+for admins:
+
+- view user data
+- view and manage orders for fulfillment
+- create shop categories and items
+- review projects
+
 ## stack
 
 - [sveltekit 5](https://kit.svelte.dev/) for frontend, routing, and SSR
