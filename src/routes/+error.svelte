@@ -2,9 +2,6 @@
 	import { page } from '$app/state';
 </script>
 
-<svelte:head>
-	<title>onekey - {page.status}</title>
-</svelte:head>
 
 <div class="error-page">
 	<p class="status">{page.status}</p>

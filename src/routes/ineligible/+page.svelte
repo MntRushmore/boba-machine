@@ -1,6 +1,4 @@
-<svelte:head>
-	<title>onekey - not eligible</title>
-</svelte:head>
+
 
 <div class="page">
 	<h1 class="heading">not eligible</h1>

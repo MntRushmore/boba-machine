@@ -204,9 +204,6 @@
 	});
 </script>
 
-<svelte:head>
-	<title>onekey - {project.name}</title>
-</svelte:head>
 
 <a href="/projects" class="back">
 	<svg

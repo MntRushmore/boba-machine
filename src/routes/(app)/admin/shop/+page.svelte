@@ -20,9 +20,6 @@
 	}
 </script>
 
-<svelte:head>
-	<title>onekey - admin: shop</title>
-</svelte:head>
 
 <div class="admin-shop">
 	<div class="page-header">

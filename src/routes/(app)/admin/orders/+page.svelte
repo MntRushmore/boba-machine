@@ -31,9 +31,6 @@
 	}
 </script>
 
-<svelte:head>
-	<title>onekey - admin: orders</title>
-</svelte:head>
 
 <div class="admin-orders">
 	<div class="page-header">

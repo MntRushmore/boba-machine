@@ -4,9 +4,6 @@
 	let { data } = $props();
 </script>
 
-<svelte:head>
-	<title>onekey - reviewer</title>
-</svelte:head>
 
 <div class="reviewer">
 	<div class="header">

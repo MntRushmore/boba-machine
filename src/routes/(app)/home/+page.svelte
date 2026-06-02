@@ -27,9 +27,6 @@
 		: ((communityProgress - prevGoal.pct) / (nextGoal.pct - prevGoal.pct)) * 100;
 </script>
 
-<svelte:head>
-	<title>onekey - home</title>
-</svelte:head>
 
 <div class="greeting-row">
 	{#if data.user?.avatar_url}

@@ -2,9 +2,6 @@
 	let { data } = $props();
 </script>
 
-<svelte:head>
-	<title>onekey - admin</title>
-</svelte:head>
 
 <div class="admin">
 	<div class="header">

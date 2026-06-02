@@ -72,9 +72,6 @@
 	});
 </script>
 
-<svelte:head>
-	<title>onekey</title>
-</svelte:head>
 
 {#if showToast}
 	<div class="toast" role="alert">

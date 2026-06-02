@@ -1,6 +1,4 @@
-<svelte:head>
-	<title>onekey - macropad</title>
-</svelte:head>
+
 
 <div class="page-header">
 	<h1 class="heading">onekey</h1>

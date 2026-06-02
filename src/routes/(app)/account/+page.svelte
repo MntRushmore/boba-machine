@@ -25,9 +25,6 @@
 	);
 </script>
 
-<svelte:head>
-	<title>onekey - account</title>
-</svelte:head>
 
 <p class="eyebrow">account</p>
 <div class="profile-header">

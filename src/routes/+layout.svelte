@@ -5,6 +5,7 @@
 </script>
 
 <svelte:head>
+	<title>onekey</title>
 	<link rel="icon" type="image/x-icon" href="/favicon.ico" />
 	<meta property="og:author" content="onekey - Hack Club" />
 	<meta property="og:title" content="onekey" />

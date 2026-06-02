@@ -51,9 +51,6 @@
 	}
 </script>
 
-<svelte:head>
-	<title>onekey - projects</title>
-</svelte:head>
 
 <svelte:window onkeydown={(e) => e.key === 'Escape' && creating && closeModal()} />
 

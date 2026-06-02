@@ -20,9 +20,6 @@
 	}
 </script>
 
-<svelte:head>
-	<title>onekey - your orders</title>
-</svelte:head>
 
 <div class="orders-page">
 	<div class="page-header">

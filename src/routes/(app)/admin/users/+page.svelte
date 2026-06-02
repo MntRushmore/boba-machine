@@ -29,9 +29,6 @@
 	}
 </script>
 
-<svelte:head>
-	<title>onekey - admin / users</title>
-</svelte:head>
 
 <div class="page">
 	<div class="header">
