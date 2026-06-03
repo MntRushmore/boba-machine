@@ -2,6 +2,7 @@ import { fail } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { shopOrders, shopItems, shopCategories, users } from '$lib/server/db/schema';
 import { eq, asc, notInArray } from 'drizzle-orm';
+import { sendSlackDM } from '$lib/server/slack';
 
 export async function load() {
 	const orders = await db
@@ -54,9 +55,25 @@ export const actions = {
 		const id = parseInt(form.get('order_id') as string);
 		if (!id || isNaN(id)) return fail(400, { error: 'invalid order id' });
 
+		const [order] = await db
+			.select({ itemName: shopItems.name, userSlackId: users.slackId })
+			.from(shopOrders)
+			.innerJoin(shopItems, eq(shopOrders.itemId, shopItems.id))
+			.innerJoin(users, eq(shopOrders.userId, users.id))
+			.where(eq(shopOrders.id, id))
+			.limit(1);
+
 		await db.update(shopOrders)
 			.set({ status: 'refunded', updatedAt: new Date() })
 			.where(eq(shopOrders.id, id));
+
+		if (order?.userSlackId) {
+			const ordersUrl = `${new URL(request.url).origin}/shop/orders`;
+			await sendSlackDM(
+				order.userSlackId,
+				`Your order *${order.itemName}* (order #${id}) has been refunded. <${ordersUrl}|See more on the dashboard>`
+			);
+		}
 
 		return { success: true };
 	}

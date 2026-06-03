@@ -480,6 +480,7 @@
 		width: 100%;
 		height: 200px;
 		flex-shrink: 0;
+		border-bottom: calc(var(--border-width) / 2) solid;
 	}
 
 	.modal-img {

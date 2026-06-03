@@ -100,7 +100,7 @@
 										<input class="input input-sm" type="number" name="stock" value={item.stock} placeholder="stock (-1 = unlimited)" />
 										<textarea class="input input-textarea" name="options" placeholder={"options (one per line):\nColor: red, blue, black\nSize: S, M, L"}>{optionsToText(item.options)}</textarea>
 										<label class="check-label">
-											<input type="hidden" name="available" value="false" />
+											<input type="hidden" name="available" value="false" disabled={item.available} />
 											<input type="checkbox" name="available" value="true" checked={item.available} onchange={(e) => { const hidden = e.currentTarget.form?.querySelector('input[name="available"][type="hidden"]') as HTMLInputElement; if (hidden) hidden.disabled = e.currentTarget.checked; }} />
 											available
 										</label>
