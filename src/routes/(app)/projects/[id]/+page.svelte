@@ -356,10 +356,10 @@
 											<span class="ht-dropdown-item ht-dropdown-muted">loading…</span>
 										{:else if hackatimeError}
 											<span class="ht-dropdown-item ht-dropdown-muted">{hackatimeError}</span>
-										{:else if hackatimeProjects.filter((p) => !selectedHtProjects.includes(p.name)).length === 0}
+										{:else if hackatimeProjects.filter((p) => !selectedHtProjects.includes(p.name) && !data.linkedHackatimeProjects.includes(p.name)).length === 0}
 											<span class="ht-dropdown-item ht-dropdown-muted">no projects found</span>
 										{:else}
-											{#each hackatimeProjects.filter((p) => !selectedHtProjects.includes(p.name)) as hp (hp.name)}
+											{#each hackatimeProjects.filter((p) => !selectedHtProjects.includes(p.name) && !data.linkedHackatimeProjects.includes(p.name)) as hp (hp.name)}
 												<button
 													type="button"
 													class="ht-dropdown-item"

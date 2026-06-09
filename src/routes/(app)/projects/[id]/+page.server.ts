@@ -9,7 +9,7 @@ import {
 	projectApprovals,
 	projectExploreSnapshots
 } from '$lib/server/db/schema';
-import { eq, and, asc, desc, count, notExists, gt, sql, sum } from 'drizzle-orm';
+import { eq, and, ne, asc, desc, count, notExists, gt, sql, sum } from 'drizzle-orm';
 import { sendSlackDM } from '$lib/server/slack';
 import { uploadImageBlob } from '$lib/server/cdn';
 import { decryptToken } from '$lib/server/session';
@@ -150,6 +150,19 @@ export async function load({ locals, params }) {
 		availableSeconds = currentSeconds - baselineSeconds;
 	}
 
+	const linkedRows = await db
+		.select({ hackatimeProject: projects.hackatimeProject })
+		.from(projects)
+		.where(ne(projects.id, id));
+	const linkedHackatimeProjects = linkedRows.flatMap((r) =>
+		r.hackatimeProject
+			? r.hackatimeProject
+					.split(',')
+					.map((s) => s.trim())
+					.filter(Boolean)
+			: []
+	);
+
 	return {
 		project,
 		approvals: approvalsWithDelta,
@@ -157,6 +170,7 @@ export async function load({ locals, params }) {
 		latestApproval,
 		derivedStatus,
 		availableSeconds,
+		linkedHackatimeProjects,
 		isReviewer: locals.isReviewer,
 		isAdmin: locals.isAdmin,
 		isOwnProject: project.userId === dbUser.id
