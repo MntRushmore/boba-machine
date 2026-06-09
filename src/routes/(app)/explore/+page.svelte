@@ -4,6 +4,40 @@
 	let { data } = $props();
 
 	const clockSvg = `<svg fill-rule="evenodd" clip-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="1.414" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" preserveAspectRatio="xMidYMid meet" fill="currentColor" stroke="currentColor" stroke-width="1.5" paint-order="stroke fill"><path d="M26 16c0 5.523-4.477 10-10 10S6 21.523 6 16 10.477 6 16 6s10 4.477 10 10zm2 0c0 6.627-5.373 12-12 12S4 22.627 4 16 9.373 4 16 4s12 5.373 12 12z"/><path d="M15.64 17a1 1 0 0 1-1-1V9a1 1 0 0 1 2 0v7a1 1 0 0 1-1 1z"/><path d="M21.702 19.502a1 1 0 0 1-1.366.366l-5.196-3a1 1 0 0 1 1-1.732l5.196 3a1 1 0 0 1 .366 1.366z"/></svg>`;
+
+	// svelte-ignore state_referenced_locally
+	let visibleProjects = $state([...data.projects]);
+	// svelte-ignore state_referenced_locally
+	let hasMore = $state(data.hasMore);
+	let loadingMore = $state(false);
+	let sentinel = $state<HTMLDivElement | null>(null);
+
+	$effect(() => {
+		if (!sentinel) return;
+		const observer = new IntersectionObserver(
+			(entries) => {
+				if (entries[0].isIntersecting && hasMore && !loadingMore) loadMore();
+			},
+			{ rootMargin: '300px' }
+		);
+		observer.observe(sentinel);
+		return () => observer.disconnect();
+	});
+
+	async function loadMore() {
+		if (loadingMore || !hasMore) return;
+		loadingMore = true;
+		try {
+			const res = await fetch(`/api/explore?offset=${visibleProjects.length}`);
+			if (res.ok) {
+				const result = await res.json();
+				visibleProjects = [...visibleProjects, ...result.projects];
+				hasMore = result.hasMore;
+			}
+		} finally {
+			loadingMore = false;
+		}
+	}
 </script>
 
 
@@ -11,13 +45,13 @@
 	<h1 class="heading">explore</h1>
 </div>
 
-{#if data.projects.length === 0}
+{#if visibleProjects.length === 0}
 	<div class="placeholder">
 		<p>no approved projects yet.</p>
 	</div>
 {:else}
 	<div class="project-grid">
-		{#each data.projects as project (project.id)}
+		{#each visibleProjects as project (project.id)}
 			<a
 				href={project.demoUrl ?? '#'}
 				target="_blank"
@@ -53,6 +87,12 @@
 			</a>
 		{/each}
 	</div>
+	{#if hasMore}
+		<div bind:this={sentinel} class="sentinel"></div>
+	{/if}
+	{#if loadingMore}
+		<div class="loading-more">loading…</div>
+	{/if}
 {/if}
 
 <style>
@@ -178,5 +218,16 @@
 	.project-author {
 		font-size: 1rem;
 		color: var(--color-text-soft);
+	}
+
+	.sentinel {
+		height: 1px;
+	}
+
+	.loading-more {
+		text-align: center;
+		padding: 2rem;
+		color: var(--color-text-soft);
+		font-size: 0.9rem;
 	}
 </style>
