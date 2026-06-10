@@ -56,6 +56,7 @@ export const actions = {
 		if (!locals.isAdmin) return fail(403, { error: 'forbidden' });
 		const form = await request.formData();
 		const id = parseInt(form.get('order_id') as string);
+		const message = (form.get('message') as string)?.trim() || null;
 		if (!id || isNaN(id)) return fail(400, { error: 'invalid order id' });
 
 		const [order] = await db
@@ -72,10 +73,10 @@ export const actions = {
 
 		if (order?.userSlackId) {
 			const ordersUrl = `${new URL(request.url).origin}/shop/orders`;
-			await sendSlackDM(
-				order.userSlackId,
-				`Your order *${order.itemName}* (order #${id}) has been refunded. <${ordersUrl}|See more on the dashboard>`
-			);
+			const text = message
+				? `Your order *${order.itemName}* (order #${id}) has been refunded.\n\n_"${message}"_\n\n<${ordersUrl}|See your orders on the dashboard>`
+				: `Your order *${order.itemName}* (order #${id}) has been refunded. <${ordersUrl}|See your orders on the dashboard>`;
+			await sendSlackDM(order.userSlackId, text);
 		}
 
 		return { success: true };

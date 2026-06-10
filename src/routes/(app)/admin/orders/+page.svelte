@@ -5,6 +5,8 @@
 	let { data, form } = $props();
 
 	let search = $state('');
+	let refundingId = $state<number | null>(null);
+
 	const filteredOrders = $derived(
 		search.trim() === ''
 			? data.orders
@@ -105,14 +107,18 @@
 								</select>
 								<button type="submit" class="btn-update">update</button>
 							</form>
-							<form method="POST" action="?/refund" use:enhance class="refund-form">
-								<input type="hidden" name="order_id" value={order.id} />
-								<button
-									type="submit"
-									class="btn-refund"
-									onclick={(e) => { if (!confirm('refund this order? the user\'s hours will be restored.')) e.preventDefault(); }}
-								>refund</button>
-							</form>
+							{#if refundingId === order.id}
+								<form method="POST" action="?/refund" use:enhance={() => ({ update }) => { refundingId = null; update(); }} class="refund-expand">
+									<input type="hidden" name="order_id" value={order.id} />
+									<textarea name="message" class="refund-msg" placeholder="message to user (optional)" rows="2"></textarea>
+									<div class="refund-expand-actions">
+										<button type="submit" class="btn-refund">confirm refund</button>
+										<button type="button" class="btn-refund-cancel" onclick={() => refundingId = null}>cancel</button>
+									</div>
+								</form>
+							{:else}
+								<button type="button" class="btn-refund" onclick={() => refundingId = order.id}>refund</button>
+							{/if}
 						{:else}
 							<span class="refunded-badge">
 								<span class="status-dot-inline" style="background: {statusDot.refunded}"></span>
@@ -401,6 +407,52 @@
 
 	.btn-refund:hover {
 		background: color-mix(in srgb, #ef4444 25%, var(--color-bg));
+	}
+
+	.refund-expand {
+		display: flex;
+		flex-direction: column;
+		gap: 0.35rem;
+		width: 100%;
+	}
+
+	.refund-msg {
+		background: var(--color-bg-soft);
+		border: 1px solid color-mix(in srgb, #ef4444 35%, transparent);
+		border-radius: 5px;
+		padding: 0.35rem 0.5rem;
+		color: var(--color-text);
+		font-size: 0.8rem;
+		font-family: inherit;
+		resize: vertical;
+		width: 100%;
+		box-sizing: border-box;
+	}
+
+	.refund-msg:focus {
+		outline: none;
+		border-color: color-mix(in srgb, #ef4444 55%, transparent);
+	}
+
+	.refund-expand-actions {
+		display: flex;
+		gap: 0.35rem;
+	}
+
+	.btn-refund-cancel {
+		font-size: 0.78rem;
+		padding: 0.3rem 0.6rem;
+		border-radius: 5px;
+		border: 1px solid color-mix(in srgb, var(--color-text) 20%, transparent);
+		background: var(--color-bg-soft);
+		color: var(--color-text-soft);
+		cursor: pointer;
+		font-family: inherit;
+		white-space: nowrap;
+	}
+
+	.btn-refund-cancel:hover {
+		color: var(--color-text);
 	}
 
 	.refunded-badge {
