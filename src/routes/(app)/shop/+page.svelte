@@ -656,6 +656,13 @@
 		opacity: 0.85;
 	}
 
+	.btn-confirm:disabled {
+		background: transparent;
+		color: var(--color-text);
+		opacity: 0.4;
+		cursor: not-allowed;
+	}
+
 	.btn-cancel-modal {
 		background: var(--color-bg);
 		color: var(--color-text);
