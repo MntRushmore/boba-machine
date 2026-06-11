@@ -1,6 +1,5 @@
 <script lang="ts">
 	import '../app.css';
-	import NavigationProgress from '$lib/components/NavigationProgress.svelte';
 
 	let { children } = $props();
 </script>
@@ -11,5 +10,4 @@
 </svelte:head>
 
 
-<NavigationProgress />
 {@render children()}

@@ -41,6 +41,11 @@
 	}
 
 	onMount(() => {
+		for (const src of [...framesDown, ...framesUp]) {
+			const img = new Image();
+			img.src = src;
+		}
+
 		if (showToast) {
 			replaceState(resolve('/'), {});
 			toastTimer = setTimeout(() => (showToast = false), 4000);
