@@ -363,7 +363,7 @@
 		width: 100%;
 		height: 240px;
 		flex-shrink: 0;
-		background: var(--color-bg-soft);
+		background: #fff;
 		border-bottom: calc(var(--border-width) / 2) solid;
 	}
 
