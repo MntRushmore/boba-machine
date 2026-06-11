@@ -186,13 +186,12 @@
 						</div>
 					{/if}
 
-					{@const canAfford = data.availableSeconds >= modalItem.priceSeconds}
 					<div class="modal-actions">
-						<button type="submit" class="btn-confirm" disabled={!canAfford}>buy for<span class="price-icon">{@html clockSvg}</span>{formatHours(modalItem.priceSeconds)}</button>
+						<button type="submit" class="btn-confirm" disabled={data.availableSeconds < modalItem.priceSeconds}>buy for<span class="price-icon">{@html clockSvg}</span>{formatHours(modalItem.priceSeconds)}</button>
 						<button type="button" class="btn-cancel-modal" onclick={closeModal}>cancel</button>
 					</div>
 					<p class="modal-balance-note">
-						{#if !canAfford}not enough hours — {/if}current balance: {formatHours(data.availableSeconds)}
+						{#if data.availableSeconds < modalItem.priceSeconds}not enough hours — {/if}current balance: {formatHours(data.availableSeconds)}
 					</p>
 				</form>
 			</div>
