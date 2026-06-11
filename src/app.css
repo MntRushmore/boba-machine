@@ -231,13 +231,13 @@ header {
 
 .nav-btn {
 	font-weight: bold;
-	font-size: 1rem;
-	padding: 0.6rem 1.1rem;
-	min-height: 3rem;
+	font-size: clamp(0.9rem, 1.1vw, 1.4rem);
+	padding: clamp(0.5rem, 0.65vw, 0.85rem) clamp(0.9rem, 1.1vw, 1.5rem);
+	min-height: unset;
 	min-width: fit-content;
 	display: flex;
 	align-items: center;
-	gap: 0.5rem;
+	gap: clamp(0.35rem, 0.5vw, 0.6rem);
 	transition:
 		background-color var(--transition-med),
 		color var(--transition-med),
@@ -245,6 +245,8 @@ header {
 }
 
 .nav-btn img {
+	width: clamp(22px, 2.5vw, 34px);
+	height: auto;
 	transition: filter var(--transition-med);
 }
 
