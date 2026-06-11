@@ -246,16 +246,16 @@
 		align-items: center;
 		gap: 0.3rem;
 		flex-shrink: 0;
+		align-self: flex-end;
+		margin-bottom: 0.15rem;
 	}
 
 	.dot-sep {
 		opacity: 0.35;
-		font-weight: normal;
 	}
 
 	.balance-label {
 		font-size: 0.75em;
-		font-weight: normal;
 		opacity: 0.6;
 		letter-spacing: 0;
 	}
