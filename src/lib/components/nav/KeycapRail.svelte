@@ -88,8 +88,11 @@
 				onmousedown={() => handlePress(item.href)}
 				onmouseup={handleRelease}
 				onmouseleave={handleRelease}
-				ontouchstart={(e) => { e.preventDefault(); handlePress(item.href); }}
-				ontouchend={handleRelease}
+				ontouchend={(e) => {
+					e.preventDefault();
+					handlePress(item.href);
+					setTimeout(handleRelease, 150);
+				}}
 			>
 				<Keycap
 					size={isMobile ? 'calc(16vw)' : 'max(55px, 9vh)'}

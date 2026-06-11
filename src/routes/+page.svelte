@@ -62,7 +62,6 @@
 			animateFrames(framesUp);
 		};
 		document.addEventListener('mouseup', handleMouseUp);
-		document.addEventListener('touchend', handleMouseUp);
 
 		const observer = new IntersectionObserver(
 			(entries) => {
@@ -81,8 +80,7 @@
 
 		return () => {
 			document.removeEventListener('mouseup', handleMouseUp);
-			document.removeEventListener('touchend', handleMouseUp);
-			observer.disconnect();
+observer.disconnect();
 		};
 	});
 </script>
@@ -177,7 +175,12 @@
 		<img
 			draggable="false"
 			onmousedown={handleKeyDown}
-			ontouchstart={(e) => { e.preventDefault(); handleKeyDown(); }}
+			ontouchend={(e) => {
+				e.preventDefault();
+				new Audio('/audio/key.wav').play().catch(() => {});
+				animateFrames(framesDown);
+				setTimeout(() => animateFrames(framesUp), framesDown.length * 30);
+			}}
 			class="key-img"
 			src={keyFrame}
 			alt="duct-taped one-key macropad"
