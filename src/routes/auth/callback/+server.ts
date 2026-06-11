@@ -4,13 +4,18 @@ import {
 	HCA_CLIENT_SECRET,
 	HCA_REDIRECT_URI,
 	SLACK_BOT_TOKEN,
-	TOKEN_ENCRYPTION_KEY
+	TOKEN_ENCRYPTION_KEY,
+	ADMIN_IDS
 } from '$env/static/private';
 import { dev } from '$app/environment';
 import { db } from '$lib/server/db';
 import { sessions, users } from '$lib/server/db/schema';
+import { eq } from 'drizzle-orm';
 import { encryptToken, generateSessionToken, hashToken } from '$lib/server/session';
+import { getLaunched } from '$lib/server/launch';
 import type { RequestHandler } from './$types';
+
+const adminSet = new Set((ADMIN_IDS || '').split(' ').map((id) => id.trim()).filter(Boolean));
 
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const DEV_ENCRYPTION_KEY = '0'.repeat(64);
@@ -94,6 +99,15 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 		userId: dbUser.id,
 		expiresAt: new Date(Date.now() + SESSION_TTL_MS)
 	});
+
+	const launched = await getLaunched();
+	const isAdmin = adminSet.has(user.sub);
+
+	if (!launched && !isAdmin) {
+		// Site is locked — kill the session and send them back with a message
+		await db.delete(sessions).where(eq(sessions.id, hashToken(rawToken)));
+		redirect(302, '/?locked=1');
+	}
 
 	cookies.set('hca_session', rawToken, {
 		path: '/',

@@ -6,7 +6,10 @@
 
 	// svelte-ignore state_referenced_locally
 	let showToast = $state(data.needsAuth);
+	// svelte-ignore state_referenced_locally
+	let showLockedToast = $state(data.locked);
 	let toastTimer: ReturnType<typeof setTimeout>;
+	let lockedToastTimer: ReturnType<typeof setTimeout>;
 
 	const framesDown = ['/img/frame1.png', '/img/frame2.png', '/img/frame3.png', '/img/frame4.png'];
 	const framesUp = ['/img/frame4.png', '/img/frame3.png', '/img/frame1.png'];
@@ -41,6 +44,10 @@
 		if (showToast) {
 			replaceState(resolve('/'), {});
 			toastTimer = setTimeout(() => (showToast = false), 4000);
+		}
+		if (showLockedToast) {
+			replaceState(resolve('/'), {});
+			lockedToastTimer = setTimeout(() => (showLockedToast = false), 5000);
 		}
 
 		const handleMouseUp = () => {
@@ -107,6 +114,19 @@
 	</div>
 {/if}
 
+{#if showLockedToast}
+	<div class="toast toast-locked" role="alert">
+		the platform isn't ready yet — stay tuned!
+		<button
+			class="toast-close"
+			onclick={() => {
+				showLockedToast = false;
+				clearTimeout(lockedToastTimer);
+			}}>✕</button
+		>
+	</div>
+{/if}
+
 <header>
 	<button
 		class="bordered nav-btn"
@@ -159,10 +179,14 @@
 	<div class="panel">
 		<img class="logo" src="/img/onekey.png" alt="onekey" />
 		<p class="tagline">make a program that only uses one key, get a one key macropad!</p>
-		{#if data.user}
-			<a href="/home" class="button filled cta">go to dashboard</a>
+		{#if data.isLaunched}
+			{#if data.user}
+				<a href="/home" class="button filled cta">go to dashboard</a>
+			{:else}
+				<a href="/login" class="button filled cta">log in with hack club</a>
+			{/if}
 		{:else}
-			<a href="/login" class="button filled cta">log in with hack club</a>
+			<a href="https://onekey.fillout.com/rsvp" target="_blank" rel="noopener noreferrer" class="button filled cta">rsvp</a>
 		{/if}
 	</div>
 </div>
@@ -345,6 +369,11 @@
 
 	.toast-close:hover {
 		opacity: 1;
+	}
+
+	.toast-locked {
+		background: #1a1a2e;
+		color: #a78bfa;
 	}
 
 	.panel {

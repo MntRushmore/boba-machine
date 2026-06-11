@@ -3,6 +3,7 @@ declare global {
 		interface Locals {
 			isAdmin: boolean;
 			isReviewer: boolean;
+			isLaunched: boolean;
 			user: {
 				sub: string;
 				name?: string;

@@ -145,3 +145,8 @@ export const shopOrders = pgTable('shop_orders', {
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().default(sql`now()`),
 	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().default(sql`now()`)
 });
+
+export const siteSettings = pgTable('site_settings', {
+	key: text('key').primaryKey(),
+	value: text('value').notNull()
+});

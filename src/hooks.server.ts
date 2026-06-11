@@ -4,6 +4,7 @@ import { db } from '$lib/server/db';
 import { sessions, users } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { hashToken } from '$lib/server/session';
+import { getLaunched } from '$lib/server/launch';
 
 const adminSet = new Set(
 	(ADMIN_IDS || '').split(' ').map((id) => id.trim()).filter(Boolean)
@@ -12,6 +13,18 @@ const adminSet = new Set(
 const reviewerSet = new Set(
 	(REVIEWER_IDS || '').split(' ').map((id) => id.trim()).filter(Boolean)
 );
+
+// Paths always accessible regardless of launch state
+function isPublicPath(pathname: string): boolean {
+	return (
+		pathname === '/' ||
+		pathname === '/login' ||
+		pathname === '/ineligible' ||
+		pathname.startsWith('/auth/') ||
+		pathname.startsWith('/img/') ||
+		pathname.startsWith('/audio/')
+	);
+}
 
 export const handle: Handle = async ({ event, resolve }) => {
 	const rawToken = event.cookies.get('hca_session');
@@ -63,6 +76,14 @@ export const handle: Handle = async ({ event, resolve }) => {
 		event.locals.user = null;
 		event.locals.isAdmin = false;
 		event.locals.isReviewer = false;
+	}
+
+	const launched = await getLaunched();
+	event.locals.isLaunched = launched;
+
+	// Block non-admin access to everything except public paths when not launched
+	if (!launched && !event.locals.isAdmin && !isPublicPath(event.url.pathname)) {
+		return Response.redirect(`${event.url.origin}/`, 302);
 	}
 
 	return resolve(event);
