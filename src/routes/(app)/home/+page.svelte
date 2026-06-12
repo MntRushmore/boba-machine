@@ -8,10 +8,10 @@
 	const goals = [
 		{ pct: 5, label: "decide max's pfp", hours: '100 hours' },
 		{ pct: 12.5, label: 'i want to cheese', hours: '250 hours' },
-		{ pct: 25, label: "dye max's hair", hours: '500 hours' },
-		{ pct: 37.5, label: "bleach [redacted]'s hair", hours: '750 hours' },
-		{ pct: 50, label: 'locked on the roof stream', hours: '1000 hours' },
-		{ pct: 75, label: 'tiktok dance', hours: '1500 hours' },
+		{ pct: 25, label: 'livestream locked on hq roof', hours: '500 hours' },
+		{ pct: 37.5, label: 'water balloon firing squad', hours: '750 hours' },
+		{ pct: 50, label: "dye max's hair", hours: '1000 hours' },
+		{ pct: 75, label: 'jenin and max tiktok dance', hours: '1500 hours' },
 		{ pct: 100, label: 'catmaid for a day', hours: '2000 hours' }
 	];
 
