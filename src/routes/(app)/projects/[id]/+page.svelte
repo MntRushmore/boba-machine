@@ -143,6 +143,10 @@
 	let screenshotPreview = $state('');
 	let screenshotCleared = $state(false);
 	let screenshotInput = $state<HTMLInputElement | null>(null);
+	let localError = $state<string | null>(null);
+
+	// Keep this in sync with adapter-node BODY_SIZE_LIMIT minus headroom for the rest of the form.
+	const MAX_SCREENSHOT_BYTES = 500 * 1024;
 
 	type HackatimeProject = { name: string; totalSeconds: number; lastSeen: number };
 	let hackatimeProjects = $state<HackatimeProject[]>([]);
@@ -198,6 +202,16 @@
 	function handleFilePick(e: Event) {
 		const input = e.currentTarget as HTMLInputElement;
 		const file = input.files?.[0];
+		if (file && file.size > MAX_SCREENSHOT_BYTES) {
+			input.value = '';
+			if (screenshotPreview) URL.revokeObjectURL(screenshotPreview);
+			screenshotPreview = '';
+			const maxKb = Math.floor(MAX_SCREENSHOT_BYTES / 1024);
+			const fileKb = Math.ceil(file.size / 1024);
+			localError = `image must be under ${maxKb} KB (yours is ${fileKb} KB)`;
+			return;
+		}
+		localError = null;
 		if (screenshotPreview) URL.revokeObjectURL(screenshotPreview);
 		screenshotPreview = file ? URL.createObjectURL(file) : '';
 		screenshotCleared = false;
@@ -228,7 +242,7 @@
 	});
 
 	$effect(() => {
-		if (form?.error) {
+		if (form?.error || localError) {
 			clearTimeout(errorToastTimer);
 			showErrorToast = true;
 			errorToastTimer = setTimeout(() => (showErrorToast = false), 3500);
@@ -798,9 +812,9 @@
 	</div>
 {/if}
 
-{#if showErrorToast && form?.error}
+{#if showErrorToast && (localError || form?.error)}
 	<div class="toast toast-error" role="alert">
-		{form.error}
+		{localError ?? form?.error}
 		<button
 			class="toast-close"
 			onclick={() => {
