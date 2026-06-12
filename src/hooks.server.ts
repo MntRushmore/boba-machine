@@ -87,8 +87,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 	const launched = await getLaunched();
 	event.locals.isLaunched = launched;
 
-	// Block non-admin access to everything except public paths when not launched
-	if (!launched && !event.locals.isAdmin && !isPublicPath(event.url.pathname)) {
+	// Block access to everything except public paths when not launched (admins + reviewers can pass)
+	if (!launched && !event.locals.isAdmin && !event.locals.isReviewer && !isPublicPath(event.url.pathname)) {
 		return Response.redirect(`${event.url.origin}/`, 302);
 	}
 

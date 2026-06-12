@@ -9,6 +9,7 @@ import { getLaunched } from '$lib/server/launch';
 import type { RequestHandler } from './$types';
 
 const adminSet = new Set((env.ADMIN_IDS || '').split(' ').map((id) => id.trim()).filter(Boolean));
+const reviewerSet = new Set((env.REVIEWER_IDS || '').split(' ').map((id) => id.trim()).filter(Boolean));
 
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const DEV_ENCRYPTION_KEY = '0'.repeat(64);
@@ -95,8 +96,9 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 
 	const launched = await getLaunched();
 	const isAdmin = adminSet.has(user.sub);
+	const isReviewer = reviewerSet.has(user.sub);
 
-	if (!launched && !isAdmin) {
+	if (!launched && !isAdmin && !isReviewer) {
 		// Site is locked — kill the session and send them back with a message
 		await db.delete(sessions).where(eq(sessions.id, hashToken(rawToken)));
 		redirect(302, '/?locked=1');
