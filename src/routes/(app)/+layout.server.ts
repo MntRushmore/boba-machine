@@ -2,6 +2,7 @@ import { redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { projects, users, projectApprovals, shopOrders } from '$lib/server/db/schema';
 import { eq, and, sum, notInArray } from 'drizzle-orm';
+import { getAvailableSeconds } from '$lib/server/balance';
 
 export async function load({ locals, url }) {
 	if (!locals.user) redirect(302, '/?needs_auth=1');
@@ -19,6 +20,7 @@ export async function load({ locals, url }) {
 		.limit(1);
 
 	let userSpentSeconds = 0;
+	let userAvailableSeconds = 0;
 
 	if (dbUser) {
 		const [r] = await db
@@ -33,6 +35,8 @@ export async function load({ locals, url }) {
 			.from(shopOrders)
 			.where(and(eq(shopOrders.userId, dbUser.id), notInArray(shopOrders.status, ['cancelled', 'refunded'])));
 		userSpentSeconds = Number(s?.total ?? 0);
+
+		userAvailableSeconds = await getAvailableSeconds(dbUser.id);
 	}
 
 	const [r2] = await db
@@ -47,7 +51,7 @@ export async function load({ locals, url }) {
 		isReviewer: locals.isReviewer,
 		userApprovedSeconds,
 		userSpentSeconds,
-		userAvailableSeconds: userApprovedSeconds - userSpentSeconds,
+		userAvailableSeconds,
 		communityApprovedSeconds
 	};
 }

@@ -4,6 +4,7 @@ import { users, balanceAdjustments } from '$lib/server/db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { sendSlackDM } from '$lib/server/slack';
 import { formatHours } from '$lib/format';
+import { getAvailableSeconds } from '$lib/server/balance';
 
 export async function load({ locals }) {
 	if (!locals.isAdmin) error(403, 'Forbidden');
@@ -86,6 +87,15 @@ export const actions = {
 		if (!targetUser) return fail(400, { error: 'user not found' });
 
 		const seconds = minutes * 60;
+
+		if (seconds < 0) {
+			const currentBalance = await getAvailableSeconds(userId);
+			if (currentBalance + seconds < 0) {
+				return fail(400, {
+					error: `adjustment would push balance below zero (current balance is ${formatHours(currentBalance)})`
+				});
+			}
+		}
 
 		await db.insert(balanceAdjustments).values({
 			userId,

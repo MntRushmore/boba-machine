@@ -147,6 +147,7 @@
 	type HackatimeProject = { name: string; totalSeconds: number; lastSeen: number };
 	let hackatimeProjects = $state<HackatimeProject[]>([]);
 	let hackatimeLoading = $state(false);
+	let hackatimeLoaded = $state(false);
 	let hackatimeError = $state('');
 
 	const MAX_HT_PROJECTS = 3;
@@ -178,14 +179,15 @@
 	}
 
 	async function loadHackatimeProjects() {
-		if (hackatimeProjects.length || hackatimeLoading) return;
+		if (hackatimeLoaded || hackatimeLoading) return;
 		hackatimeLoading = true;
 		hackatimeError = '';
 		try {
 			const res = await fetch('/api/hackatime/projects');
 			if (!res.ok) throw new Error(await res.text());
 			const json = await res.json();
-			hackatimeProjects = json.projects;
+			hackatimeProjects = json.projects ?? [];
+			hackatimeLoaded = true;
 		} catch {
 			hackatimeError = 'could not load hackatime projects';
 		} finally {
@@ -389,7 +391,7 @@
 										{:else if hackatimeError}
 											<span class="ht-dropdown-item ht-dropdown-muted">{hackatimeError}</span>
 										{:else if hackatimeProjects.filter((p) => !selectedHtProjects.includes(p.name) && !data.linkedHackatimeProjects.includes(p.name)).length === 0}
-											<span class="ht-dropdown-item ht-dropdown-muted">no projects found</span>
+											<span class="ht-dropdown-item ht-dropdown-muted">no valid hackatime projects</span>
 										{:else}
 											{#each hackatimeProjects.filter((p) => !selectedHtProjects.includes(p.name) && !data.linkedHackatimeProjects.includes(p.name)) as hp (hp.name)}
 												<button
@@ -531,36 +533,59 @@
 
 		{#if data.approvals.length > 0 || data.events.length > 0}
 			{@const allEvents = [
-				...data.approvals.map((a) => ({
-					id: `approval-${a.id}`,
-					type: 'approval' as const,
-					action: a.status === 'pending' ? 'submitted' : a.status,
-					time: a.status === 'pending' ? a.submittedAt : (a.reviewedAt ?? a.submittedAt),
-					actorAvatar: a.reviewerAvatar,
-					actorName: a.reviewerName,
-					actorNickname: a.reviewerNickname,
-					message: a.publicMessage,
-					internalNote: a.internalNote,
-					submittedSeconds: a.submittedSeconds,
-					newSeconds: a.newSeconds,
-					approvedSeconds: a.approvedSeconds,
-					isSubmission: a.status === 'pending'
-				})),
-				...data.events.map((e) => ({
-					id: `event-${e.id}`,
-					type: 'comment' as const,
-					action: e.action,
-					time: e.createdAt,
-					actorAvatar: e.actorAvatar,
-					actorName: e.actorName,
-					actorNickname: e.actorNickname,
-					message: e.message,
-					internalNote: e.internalNote,
-					submittedSeconds: null,
-					newSeconds: null,
-					approvedSeconds: null,
-					isSubmission: false
-				}))
+				...data.approvals.flatMap((a) => {
+					const submission = {
+						id: `approval-${a.id}-submitted`,
+						type: 'approval' as const,
+						action: 'submitted',
+						time: a.submittedAt,
+						actorAvatar: null as string | null,
+						actorName: null as string | null,
+						actorNickname: null as string | null,
+						message: null as string | null,
+						internalNote: null as string | null,
+						submittedSeconds: a.submittedSeconds,
+						newSeconds: a.newSeconds,
+						approvedSeconds: null as number | null,
+						isSubmission: true
+					};
+					if (a.status === 'pending') return [submission];
+					return [
+						submission,
+						{
+							id: `approval-${a.id}-${a.status}`,
+							type: 'approval' as const,
+							action: a.status,
+							time: a.reviewedAt ?? a.submittedAt,
+							actorAvatar: a.reviewerAvatar,
+							actorName: a.reviewerName,
+							actorNickname: a.reviewerNickname,
+							message: a.publicMessage,
+							internalNote: a.internalNote,
+							submittedSeconds: a.submittedSeconds,
+							newSeconds: a.newSeconds,
+							approvedSeconds: a.approvedSeconds,
+							isSubmission: false
+						}
+					];
+				}),
+				...data.events
+					.filter((e) => e.action !== 'submitted')
+					.map((e) => ({
+						id: `event-${e.id}`,
+						type: 'comment' as const,
+						action: e.action,
+						time: e.createdAt,
+						actorAvatar: e.actorAvatar,
+						actorName: e.actorName,
+						actorNickname: e.actorNickname,
+						message: e.message,
+						internalNote: e.internalNote,
+						submittedSeconds: null,
+						newSeconds: null,
+						approvedSeconds: null,
+						isSubmission: false
+					}))
 			]
 				.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime())
 				.filter((e) => e.action !== 'comment' || isReviewerOrAdmin)}
@@ -991,7 +1016,7 @@
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
 		color: var(--rail-label);
-		font-weight: 500;
+		font-weight: bold;
 	}
 
 	.edit-input {

@@ -7,7 +7,8 @@ import {
 	users,
 	projectEvents,
 	projectApprovals,
-	projectExploreSnapshots
+	projectExploreSnapshots,
+	approvedSubmissions
 } from '$lib/server/db/schema';
 import { eq, and, ne, asc, desc, count, notExists, gt, sql, sum } from 'drizzle-orm';
 import { sendSlackDM } from '$lib/server/slack';
@@ -557,6 +558,40 @@ export const actions = {
 
 		if (projectData) {
 			const totalApprovedSeconds = Number(totalRow?.total ?? 0);
+
+			const [authorUser] = await db
+				.select()
+				.from(users)
+				.where(eq(users.id, projectData.userId))
+				.limit(1);
+
+			await db.insert(approvedSubmissions).values({
+				approvalId: latestApproval.id,
+				projectId: id,
+				userId: projectData.userId,
+				authorName: authorUser?.name ?? null,
+				authorHcaId: authorUser?.hcaId ?? null,
+				authorEmail: authorUser?.email ?? null,
+				authorStreetAddress: authorUser?.streetAddress ?? null,
+				authorAddressLine2: authorUser?.addressLine2 ?? null,
+				authorLocality: authorUser?.locality ?? null,
+				authorRegion: authorUser?.region ?? null,
+				authorPostalCode: authorUser?.postalCode ?? null,
+				authorCountry: authorUser?.country ?? null,
+				projectName: projectData.name,
+				projectDescription: projectData.description,
+				projectRepoUrl: projectData.repoUrl,
+				projectDemoUrl: projectData.demoUrl,
+				projectScreenshotUrl: projectData.screenshotUrl,
+				projectAiDeclaration: projectData.aiDeclaration,
+				hackatimeProject: projectData.hackatimeProject,
+				submittedSeconds: latestApproval.submittedSeconds,
+				approvedSeconds,
+				publicMessage: message,
+				submittedAt: latestApproval.submittedAt,
+				approvedAt: new Date()
+			});
+
 			await db
 				.insert(projectExploreSnapshots)
 				.values({
@@ -580,13 +615,7 @@ export const actions = {
 					}
 				});
 
-			const [ownerUser] = await db
-				.select({ slackId: users.slackId })
-				.from(users)
-				.where(eq(users.id, projectData.userId))
-				.limit(1);
-
-			if (ownerUser?.slackId) {
+			if (authorUser?.slackId) {
 				const hours = (approvedSeconds / 3600).toFixed(1) + 'h';
 				const dashboardUrl = `${new URL(request.url).origin}/projects/${id}`;
 				const quote = message
@@ -596,7 +625,7 @@ export const actions = {
 							.join('\n')}\n`
 					: '\n';
 				await sendSlackDM(
-					ownerUser.slackId,
+					authorUser.slackId,
 					`Your project *${projectData.name}* was approved for ${hours}!${quote}<${dashboardUrl}|See more on the dashboard>`
 				);
 			}

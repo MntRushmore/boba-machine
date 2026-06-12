@@ -160,3 +160,46 @@ export const balanceAdjustments = pgTable('balance_adjustments', {
 	message: text('message').notNull(),
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().default(sql`now()`)
 });
+
+export const approvedSubmissions = pgTable('approved_submissions', {
+	id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+	approvalId: integer('approval_id')
+		.notNull()
+		.unique()
+		.references(() => projectApprovals.id, { onDelete: 'cascade' }),
+	projectId: integer('project_id')
+		.notNull()
+		.references(() => projects.id, { onDelete: 'cascade' }),
+	userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
+
+	// author identity snapshot
+	authorName: text('author_name'),
+	authorHcaId: text('author_hca_id'),
+	authorEmail: text('author_email'),
+
+	// author address snapshot at approval time
+	authorStreetAddress: text('author_street_address'),
+	authorAddressLine2: text('author_address_line_2'),
+	authorLocality: text('author_locality'),
+	authorRegion: text('author_region'),
+	authorPostalCode: text('author_postal_code'),
+	authorCountry: text('author_country'),
+
+	// project state snapshot at approval time
+	projectName: text('project_name').notNull(),
+	projectDescription: text('project_description'),
+	projectRepoUrl: text('project_repo_url'),
+	projectDemoUrl: text('project_demo_url'),
+	projectScreenshotUrl: text('project_screenshot_url'),
+	projectAiDeclaration: text('project_ai_declaration'),
+	hackatimeProject: text('hackatime_project'),
+
+	// approval data
+	submittedSeconds: integer('submitted_seconds').notNull(),
+	approvedSeconds: integer('approved_seconds').notNull(),
+	publicMessage: text('public_message'),
+
+	submittedAt: timestamp('submitted_at', { withTimezone: true }).notNull(),
+	approvedAt: timestamp('approved_at', { withTimezone: true }).notNull(),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().default(sql`now()`)
+});
