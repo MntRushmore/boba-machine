@@ -106,7 +106,7 @@
 		color: white;
 	}
 
-	:global(.dashboard.dark .hero-bg) {
+	:global(.dashboard.dark .hero-bg:not(.hero-bg-left)) {
 		filter: invert(1) blur(3.5px);
 	}
 

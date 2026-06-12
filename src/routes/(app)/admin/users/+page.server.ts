@@ -22,6 +22,7 @@ export async function load({ locals }) {
 			slackDisplayName: users.slackDisplayName,
 			verificationStatus: users.verificationStatus,
 			yswsEligible: users.yswsEligible,
+			birthday: users.birthday,
 			streetAddress: users.streetAddress,
 			addressLine2: users.addressLine2,
 			locality: users.locality,
