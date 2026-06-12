@@ -25,7 +25,11 @@ export async function load({ locals }) {
 		.select()
 		.from(shopItems)
 		.where(eq(shopItems.available, true))
-		.orderBy(asc(shopItems.categoryId), asc(shopItems.priceSeconds), sql`lower(${shopItems.name})`);
+		.orderBy(
+			asc(shopItems.categoryId),
+			asc(sql`coalesce(${shopItems.discountSeconds}, ${shopItems.priceSeconds})`),
+			sql`lower(${shopItems.name})`
+		);
 
 	const categoriesWithItems = categories
 		.map((cat) => ({ ...cat, items: items.filter((i) => i.categoryId === cat.id) }))
