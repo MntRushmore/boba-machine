@@ -19,8 +19,8 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 	const state = url.searchParams.get('state');
 	const savedState = cookies.get('hca_state');
 
-	if (!code) error(400, 'missing code');
-	if (!savedState || state !== savedState) error(400, 'invalid state');
+	if (!code || !state) redirect(302, '/?error=auth_failed');
+	if (!savedState || state !== savedState) redirect(302, '/?error=session_expired');
 
 	cookies.delete('hca_state', { path: '/' });
 
@@ -37,7 +37,9 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 	});
 
 	if (!tokenRes.ok) error(502, 'token exchange failed');
-	const { access_token } = await tokenRes.json();
+	const tokenData = await tokenRes.json();
+	const access_token: string | undefined = tokenData.access_token;
+	if (!access_token) error(502, 'no access token returned');
 
 	const meRes = await fetch('https://auth.hackclub.com/oauth/userinfo', {
 		headers: { Authorization: `Bearer ${access_token}` }
@@ -45,6 +47,8 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 
 	if (!meRes.ok) error(502, 'failed to fetch user info');
 	const user = await meRes.json();
+
+	if (!user.sub) redirect(302, '/?error=auth_failed');
 
 	if (user.ysws_eligible === false) {
 		redirect(302, '/ineligible');

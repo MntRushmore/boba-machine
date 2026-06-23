@@ -8,8 +8,18 @@
 	let showToast = $state(data.needsAuth);
 	// svelte-ignore state_referenced_locally
 	let showLockedToast = $state(data.locked);
+	// svelte-ignore state_referenced_locally
+	let showAuthErrorToast = $state(!!data.authError);
 	let toastTimer: ReturnType<typeof setTimeout>;
 	let lockedToastTimer: ReturnType<typeof setTimeout>;
+	let authErrorToastTimer: ReturnType<typeof setTimeout>;
+
+	const authErrorMessage =
+		data.authError === 'session_expired'
+			? 'login session expired — please try again!'
+			: data.authError
+				? 'something went wrong with login — please try again!'
+				: '';
 
 	const framesDown = ['/img/frame1.png', '/img/frame2.png', '/img/frame3.png', '/img/frame4.png'];
 	const framesUp = ['/img/frame4.png', '/img/frame3.png', '/img/frame1.png'];
@@ -57,6 +67,10 @@
 		if (showLockedToast) {
 			replaceState(resolve('/'), {});
 			lockedToastTimer = setTimeout(() => (showLockedToast = false), 5000);
+		}
+		if (showAuthErrorToast) {
+			replaceState(resolve('/'), {});
+			authErrorToastTimer = setTimeout(() => (showAuthErrorToast = false), 6000);
 		}
 
 		const handleMouseUp = () => {
@@ -132,6 +146,19 @@
 			onclick={() => {
 				showLockedToast = false;
 				clearTimeout(lockedToastTimer);
+			}}>✕</button
+		>
+	</div>
+{/if}
+
+{#if showAuthErrorToast}
+	<div class="toast toast-error" role="alert">
+		{authErrorMessage}
+		<button
+			class="toast-close"
+			onclick={() => {
+				showAuthErrorToast = false;
+				clearTimeout(authErrorToastTimer);
 			}}>✕</button
 		>
 	</div>
@@ -513,6 +540,11 @@
 	.toast-locked {
 		background: #1a1a2e;
 		color: #a78bfa;
+	}
+
+	.toast-error {
+		background: #2a0a0a;
+		color: #f87171;
 	}
 
 	.panel {

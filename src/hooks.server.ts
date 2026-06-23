@@ -1,17 +1,13 @@
 import type { Handle } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { db } from '$lib/server/db';
-import { sessions, users } from '$lib/server/db/schema';
+import { sessions, users, reviewers } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { hashToken } from '$lib/server/session';
 import { getLaunched } from '$lib/server/launch';
 
 const adminSet = new Set(
 	(env.ADMIN_IDS || '').split(' ').map((id) => id.trim()).filter(Boolean)
-);
-
-const reviewerSet = new Set(
-	(env.REVIEWER_IDS || '').split(' ').map((id) => id.trim()).filter(Boolean)
 );
 
 // Paths always accessible regardless of launch state
@@ -32,6 +28,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 	const { pathname } = event.url;
 
 	if (staticPrefixes.some((p) => pathname.startsWith(p))) return resolve(event);
+
+	const reviewerRows = await db.select({ hcaId: reviewers.hcaId }).from(reviewers);
+	const reviewerSet = new Set(reviewerRows.map((r) => r.hcaId));
 
 	const rawToken = event.cookies.get('hca_session');
 

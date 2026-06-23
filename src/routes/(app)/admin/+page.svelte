@@ -38,6 +38,10 @@
 			<span class="card-label">orders</span>
 			<p class="card-desc">view and fulfill orders (oldest first)</p>
 		</a>
+		<a href="/admin/reviewers" class="card">
+			<span class="card-label">reviewers</span>
+			<p class="card-desc">manage who can access review pages</p>
+		</a>
 	</div>
 </div>
 

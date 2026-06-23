@@ -15,7 +15,8 @@ export const actions: Actions = {
 		if (!locals.user.hackatime_linked) redirect(302, '/onboarding/setup');
 
 		const data = await request.formData();
-		const destination = (data.get('destination') as string) || '/home';
+		const raw = data.get('destination') as string | null;
+		const destination = raw && /^\/(?![/\\])/.test(raw) ? raw : '/home';
 
 		await db
 			.update(users)

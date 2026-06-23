@@ -9,7 +9,7 @@ export async function load({ cookies, url }) {
 		httpOnly: true,
 		sameSite: 'lax',
 		secure: !dev,
-		maxAge: 60 * 10
+		maxAge: 60 * 30
 	});
 
 	const params = new URLSearchParams({

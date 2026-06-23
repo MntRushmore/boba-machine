@@ -220,3 +220,9 @@ export const approvedSubmissions = pgTable('approved_submissions', {
 	approvedAt: timestamp('approved_at', { withTimezone: true }).notNull(),
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().default(sql`now()`)
 });
+
+export const reviewers = pgTable('reviewers', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	hcaId: text('hca_id').notNull().unique(),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().default(sql`now()`)
+});
