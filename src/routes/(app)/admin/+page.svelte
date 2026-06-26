@@ -50,6 +50,14 @@
 			<span class="card-label">stats</span>
 			<p class="card-desc">key platform statistics and the submission funnel</p>
 		</a>
+		<a href="/admin/ships" class="card">
+			<span class="card-label">ships</span>
+			<p class="card-desc">every review submission with its verdict, linked to its project</p>
+		</a>
+		<a href="/admin/slack-dm" class="card">
+			<span class="card-label">slack mass DM</span>
+			<p class="card-desc">DM cohorts of users from your own Slack account</p>
+		</a>
 	</div>
 </div>
 
