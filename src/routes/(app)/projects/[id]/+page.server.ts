@@ -39,6 +39,7 @@ async function notifyReviewChannel(opts: {
 	origin: string;
 	projectId: number;
 	projectName: string;
+	submitterSlackId: string | null;
 	submitterName: string | null;
 	submittedSeconds: number;
 	isReship: boolean;
@@ -49,7 +50,9 @@ async function notifyReviewChannel(opts: {
 	try {
 		const reviewUrl = `${opts.origin}/projects/${opts.projectId}`;
 		const hours = (opts.submittedSeconds / 3600).toFixed(1);
-		const who = opts.submitterName || 'Someone';
+		const who = opts.submitterSlackId
+			? `<@${opts.submitterSlackId}>`
+			: opts.submitterName || 'Someone';
 		const verb = opts.isReship ? 'reshipped' : 'shipped';
 		const lines = [`:ship: *${who}* ${verb} *${opts.projectName}* — ${hours}h logged`];
 		if (opts.repoUrl) lines.push(`• Repo: ${opts.repoUrl}`);
@@ -421,6 +424,7 @@ export const actions = {
 			origin: new URL(request.url).origin,
 			projectId: id,
 			projectName: name,
+			submitterSlackId: dbUser.slackId,
 			submitterName: dbUser.name,
 			submittedSeconds: totalSeconds,
 			isReship: false,
@@ -490,6 +494,7 @@ export const actions = {
 			origin: new URL(request.url).origin,
 			projectId: id,
 			projectName: projectRow.name,
+			submitterSlackId: dbUser.slackId,
 			submitterName: dbUser.name,
 			submittedSeconds: currentSeconds,
 			isReship: true,
