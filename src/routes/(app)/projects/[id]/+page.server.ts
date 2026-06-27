@@ -17,13 +17,48 @@ import { createAirtableApprovalRecord } from '$lib/server/airtable';
 import { decryptToken } from '$lib/server/session';
 import { decideEligibility, isEligibleDecision, eligibilityMessage } from '$lib/server/eligibility';
 import { checkYswsStatus } from '$lib/server/verification';
+import { isStaging } from '$lib/server/staging';
 
 const HACKATIME_BASE_URL = 'https://hackatime.hackclub.com';
 const DEV_ENCRYPTION_KEY = '0'.repeat(64);
 
+// Channel reviewers watch to pick up new submissions. Overridable via env.
+const REVIEW_CHANNEL_ID = env.SLACK_REVIEW_CHANNEL_ID || 'C0BBHACUXE1';
+
 async function getDbUser(hcaId: string) {
 	const [row] = await db.select().from(users).where(eq(users.hcaId, hcaId)).limit(1);
 	return row ?? null;
+}
+
+/**
+ * Post to the reviewer channel when a project is submitted or reshipped, so
+ * reviewers know there's new work in the queue. Best-effort: never throws, and
+ * is skipped on staging so test instances don't spam the real channel.
+ */
+async function notifyReviewChannel(opts: {
+	origin: string;
+	projectId: number;
+	projectName: string;
+	submitterName: string | null;
+	submittedSeconds: number;
+	isReship: boolean;
+	repoUrl?: string | null;
+	demoUrl?: string | null;
+}) {
+	if (isStaging()) return;
+	try {
+		const reviewUrl = `${opts.origin}/projects/${opts.projectId}`;
+		const hours = (opts.submittedSeconds / 3600).toFixed(1);
+		const who = opts.submitterName || 'Someone';
+		const verb = opts.isReship ? 'reshipped' : 'shipped';
+		const lines = [`:ship: *${who}* ${verb} *${opts.projectName}* — ${hours}h logged`];
+		if (opts.repoUrl) lines.push(`• Repo: ${opts.repoUrl}`);
+		if (opts.demoUrl) lines.push(`• Demo: ${opts.demoUrl}`);
+		lines.push(`<${reviewUrl}|Review on the dashboard>`);
+		await sendSlackDM(REVIEW_CHANNEL_ID, lines.join('\n'));
+	} catch (e) {
+		console.error('failed to post submission notification to review channel', e);
+	}
 }
 
 async function getHackatimeSeconds(
@@ -382,6 +417,17 @@ export const actions = {
 			aiDeclaration
 		});
 
+		await notifyReviewChannel({
+			origin: new URL(request.url).origin,
+			projectId: id,
+			projectName: name,
+			submitterName: dbUser.name,
+			submittedSeconds: totalSeconds,
+			isReship: false,
+			repoUrl,
+			demoUrl
+		});
+
 		return { success: true };
 	},
 
@@ -438,6 +484,17 @@ export const actions = {
 			submittedSeconds: currentSeconds,
 			status: 'pending',
 			aiDeclaration: projectRow.aiDeclaration ?? null
+		});
+
+		await notifyReviewChannel({
+			origin: new URL(request.url).origin,
+			projectId: id,
+			projectName: projectRow.name,
+			submitterName: dbUser.name,
+			submittedSeconds: currentSeconds,
+			isReship: true,
+			repoUrl: projectRow.repoUrl,
+			demoUrl: projectRow.demoUrl
 		});
 
 		return { success: true };
