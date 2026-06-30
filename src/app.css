@@ -1,50 +1,122 @@
+/* ──────────────────────────────────────────────────────────────
+   Boba Drops — type
+   Fraunces (variable, self-hosted) carries display/headings.
+   A clean system sans handles UI + body for long-session readability.
+   ────────────────────────────────────────────────────────────── */
 @font-face {
-	font-family: 'Phantom Sans';
-	src:
-		url('https://assets.hackclub.com/fonts/Phantom_Sans_0.7/Regular.woff') format('woff'),
-		url('https://assets.hackclub.com/fonts/Phantom_Sans_0.7/Regular.woff2') format('woff2');
-	font-weight: normal;
+	font-family: 'Fraunces';
+	src: url('/fonts/fraunces-latin.woff2') format('woff2');
+	font-weight: 100 900;
 	font-style: normal;
 	font-display: swap;
 }
 @font-face {
-	font-family: 'Phantom Sans';
-	src:
-		url('https://assets.hackclub.com/fonts/Phantom_Sans_0.7/Italic.woff') format('woff'),
-		url('https://assets.hackclub.com/fonts/Phantom_Sans_0.7/Italic.woff2') format('woff2');
-	font-weight: normal;
+	font-family: 'Fraunces';
+	src: url('/fonts/fraunces-latin-italic.woff2') format('woff2');
+	font-weight: 100 900;
 	font-style: italic;
 	font-display: swap;
 }
-@font-face {
-	font-family: 'Phantom Sans';
-	src:
-		url('https://assets.hackclub.com/fonts/Phantom_Sans_0.7/Bold.woff') format('woff'),
-		url('https://assets.hackclub.com/fonts/Phantom_Sans_0.7/Bold.woff2') format('woff2');
-	font-weight: bold;
-	font-style: normal;
-	font-display: swap;
-}
-@font-face {
-	font-family: 'Phantom Sans';
-	src:
-		url('https://assets.hackclub.com/fonts/Phantom_Sans_0.7/Med.woff') format('woff'),
-		url('https://assets.hackclub.com/fonts/Phantom_Sans_0.7/Med.woff2') format('woff2');
-	font-weight: 500;
-	font-style: normal;
-	font-display: swap;
+
+/* ──────────────────────────────────────────────────────────────
+   Boba Drops — design tokens
+   Brown-Sugar is the default (light) theme; the .dark scope below
+   (applied by the existing dark-mode toggle) is Late-Night Café.
+   The legacy --color-* names are kept so every page reskins for free.
+   ────────────────────────────────────────────────────────────── */
+:root {
+	/* ── Boba Drops design system — modeled on hackclub/stardance's branding.md.
+	   Surface "sets" (deep ground → warmer lifted cards) carry structure; bright
+	   pastel accents carry life so the UI never reads as flat monochrome brown.
+
+	   SETS (surfaces). Never pure black; darkest is set 1.
+	   set 1 = page background + text-heavy containers
+	   set 2 = clickable cards (get a 2px border)
+	   set 3 = lifted top-of-page cards (no border)
+	   set 4 = highlighted / attention cards                                   */
+	--set-1: #241405;
+	--set-1-fg2: #b09372; /* muted text / border on set 1 */
+	--set-2: #341f0c;
+	--set-2-fg2: #c0a482;
+	--set-3: #45290f;
+	--set-3-fg2: #dac3a1;
+	--set-4: #543518;
+
+	--ink: #fff6e6; /* primary text — warm white, never pure */
+	--cream: #f6d193; /* brand mark */
+	--cream-soft: #f7e3bd;
+	--highlight: #f4e3b6; /* PRIMARY button fill — soft, not the loud yellow */
+	--highlight-2: #fef6dd;
+	--pearl: #1c0f04;
+
+	/* ── Accents — boba flavors, bright against the deep ground, used sparingly
+	   for status / emphasis. Each has a ~0.18 soft fill. */
+	--matcha: #a3cf6b;
+	--matcha-soft: rgba(163, 207, 107, 0.18);
+	--taro: #c9aeec;
+	--taro-soft: rgba(201, 174, 236, 0.18);
+	--berry: #f59a82;
+	--berry-soft: rgba(245, 154, 130, 0.2);
+	--sky: #8fd2f0;
+	--sky-soft: rgba(143, 210, 240, 0.18);
+	--caramel: #e89a4d; /* admin/manageable marker hue */
+	--caramel-soft: rgba(232, 154, 77, 0.18);
+
+	/* semantic status maps onto the flavor accents */
+	--good: var(--matcha);
+	--good-soft: var(--matcha-soft);
+	--warn: var(--caramel);
+	--bad: var(--berry);
+
+	/* the expressive accent (Stardance's lilac role) = taro for us */
+	--accent: var(--taro);
+
+	/* ── legacy aliases so every existing page reskins for free ── */
+	--color-text: var(--ink);
+	--color-text-soft: var(--set-3-fg2);
+	--color-bg: var(--set-1);
+	--color-bg-soft: var(--set-2);
+	--color-surface: var(--set-2);
+	--color-surface-2: var(--set-3);
+	--color-line: rgba(255, 246, 230, 0.12);
+	--rail-label: var(--set-1-fg2);
+
+	--espresso: var(--set-3);
+	--espresso-deep: var(--set-1);
+
+	--radius: 8px;
+	--radius-pill: 9999px;
+	--radius-card: 8px;
+	--border-width: 2px;
+	--transition-fast: 0.14s ease;
+	--transition-med: 0.2s ease;
+
+	/* subtle shadow (stardance uses soft, not chunky drop shadows) */
+	--shadow: 0 0 2px 1px rgba(0, 0, 0, 0.3);
+	--shadow-stack: var(--shadow);
+	--shadow-stack-lg: 0 10px 30px rgba(0, 0, 0, 0.35);
+
+	/* spacing scale (8px system) */
+	--space-xxxs: 4px;
+	--space-xxs: 6px;
+	--space-xs: 8px;
+	--space-s: 12px;
+	--space-m: 16px;
+	--space-l: 24px;
+	--space-xl: 32px;
+	--space-xxl: 40px;
+
+	--font-display: 'Fraunces', 'Hoefler Text', Georgia, 'Times New Roman', serif;
+	--font-body: 'Exo 2', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica,
+		Arial, sans-serif;
 }
 
-:root {
-	--color-text: black;
-	--color-text-soft: #282828;
-	--color-bg: white;
-	--color-bg-soft: whitesmoke;
-	--radius-pill: 9999px;
-	--radius-card: 1rem;
-	--border-width: 0.25rem;
-	--transition-fast: 0.1s linear;
-	--transition-med: 0.2s linear;
+/* Single dark identity — the .dark toggle is a no-op now (the app is one
+   cohesive deep theme). Kept so the existing toggle code doesn't break. */
+:root.dark,
+.dark {
+	--color-text: var(--ink);
+	--color-bg: var(--set-1);
 }
 
 html:has(.dashboard),
@@ -62,45 +134,65 @@ body {
 	margin: 0;
 	padding: 0;
 	scroll-behavior: smooth;
-	font-family: 'Phantom Sans', sans-serif;
+	font-family: var(--font-body);
 	font-size: 1rem;
+	line-height: 1.6;
 	color: var(--color-text);
 	background-color: var(--color-bg);
+	-webkit-font-smoothing: antialiased;
+}
+
+/* ---------- headings carry Fraunces ---------- */
+h1,
+h2,
+h3,
+.display,
+.section-head,
+.heading {
+	font-family: var(--font-display);
+	font-weight: 600;
+	letter-spacing: -0.012em;
+	line-height: 1.08;
+	text-wrap: balance;
 }
 
 p {
-	font-size: 1.2rem;
-	line-height: 1.77778;
+	font-size: 1.12rem;
+	line-height: 1.7;
 }
 
 a {
 	color: var(--color-text);
 	text-decoration: underline;
+	text-decoration-color: color-mix(in srgb, var(--color-text) 40%, transparent);
+	text-underline-offset: 3px;
 	transition: color var(--transition-fast);
 	cursor: default;
 }
 
 a:hover {
-	color: var(--color-text-soft);
-	text-decoration: underline dotted;
-	text-decoration-thickness: clamp(1px, 0.13vw, 2px);
-	text-underline-offset: clamp(1px, 0.15vw, 2.5px);
+	color: var(--accent);
+	text-decoration-color: var(--accent);
 	cursor: pointer;
 }
 
-/* ---------- pill-shaped controls ---------- */
+/* ---------- controls ---------- */
 button,
 .button,
 .input {
-	font-family: 'Phantom Sans', sans-serif;
+	font-family: var(--font-body);
 	border-radius: var(--radius-pill);
-	padding: 1.25rem;
-	font-size: 1.25rem;
+	padding: 1rem 1.4rem;
+	font-size: 1.1rem;
+	font-weight: 600;
 }
 
 button {
-	transition: background-color var(--transition-fast);
+	transition:
+		background-color var(--transition-fast),
+		transform var(--transition-fast);
 	cursor: default;
+	color: inherit;
 }
 
 button:hover,
@@ -117,41 +209,57 @@ button:hover,
 	border: dotted var(--border-width) var(--color-text);
 }
 
-/* solid border by default, dotted on hover — used for buttons and cards */
+/* set-2 clickable card: the 2px border signals "you can click me" (stardance §3) */
 .bordered {
-	background-color: var(--color-bg);
+	background-color: var(--set-2);
+	color: var(--color-text);
 	outline: none;
-	border: solid var(--border-width);
+	border: 2px solid var(--set-2-fg2);
+	box-shadow: none;
+	transition:
+		border-color var(--transition-fast),
+		background-color var(--transition-fast);
 }
 
 .bordered:hover {
-	border: dotted var(--border-width) var(--color-text);
+	border-color: var(--cream);
 }
 
-input.dotted:focus {
+input.dotted:focus,
+input.bordered:focus {
 	outline: none;
-	border: solid var(--border-width);
+	border-color: var(--cream);
 }
 
+/* primary action: soft highlight fill, dark ink, fully-rounded pill (stardance §4) */
 .filled {
-	border: none;
-	background-color: var(--color-text);
-	color: var(--color-bg);
-	font-weight: 600;
-	transition: background-color var(--transition-fast);
+	border: 2px solid var(--highlight);
+	background-color: var(--highlight);
+	color: var(--set-1);
+	font-weight: 700;
+	transition:
+		background-color var(--transition-med),
+		border-color var(--transition-med);
 }
 
 .filled:hover {
-	background-color: var(--color-text-soft);
-	color: var(--color-bg);
+	background-color: var(--highlight-2);
+	border-color: var(--highlight-2);
+	color: var(--set-1);
 	text-decoration: none;
+}
+
+.filled:active {
+	background-color: #fff;
+	border-color: #fff;
 }
 
 /* ---------- card ---------- */
 .card {
 	border-radius: var(--radius-card);
-	background-color: var(--color-bg);
-	padding: 1rem;
+	background-color: var(--set-3);
+	color: var(--color-text);
+	padding: var(--space-l);
 }
 
 /* ---------- layout primitives ---------- */
@@ -177,7 +285,7 @@ input.dotted:focus {
 
 .subhead {
 	font-size: 1.3rem;
-	letter-spacing: 0.7px;
+	letter-spacing: 0.2px;
 }
 
 .subhead-spaced {
@@ -191,6 +299,21 @@ input.dotted:focus {
 
 .text-center {
 	text-align: center;
+}
+
+/* uppercase utility label */
+.eyebrow {
+	font-size: 0.78rem;
+	letter-spacing: 0.18em;
+	text-transform: uppercase;
+	font-weight: 700;
+	opacity: 0.75;
+}
+
+/* keyboard focus stays visible */
+:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
 }
 
 /* ---------- header / nav ---------- */
@@ -242,7 +365,7 @@ header {
 	transition:
 		background-color var(--transition-med),
 		color var(--transition-med),
-		border-color var(--transition-med);
+		transform var(--transition-med);
 }
 
 .nav-btn img,
@@ -253,18 +376,12 @@ header {
 }
 
 .nav-active {
-	background-color: var(--color-text);
-	color: var(--color-bg);
-	border-color: var(--color-text);
-}
-
-.nav-active img {
-	filter: invert(1);
+	background-color: var(--cream);
+	color: var(--espresso);
 }
 
 .nav-active:hover {
-	border-style: solid;
-	border-color: var(--color-text);
+	background-color: var(--cream);
 }
 
 /* ---------- footer ---------- */
@@ -273,6 +390,195 @@ footer {
 	background-color: var(--color-bg-soft);
 	padding: 0.5rem;
 	text-align: center;
+}
+
+/* ---------- boba pearl marker ---------- */
+.pearl-dot {
+	display: inline-block;
+	width: 1em;
+	height: 1em;
+	border-radius: 50%;
+	background: var(--pearl);
+	position: relative;
+	flex: none;
+	vertical-align: middle;
+}
+.pearl-dot::after {
+	content: '';
+	position: absolute;
+	top: 20%;
+	left: 20%;
+	width: 30%;
+	height: 30%;
+	border-radius: 50%;
+	background: var(--cream);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Ported from hackclub/stardance (docs/branding.md), reskinned to boba.
+   These are the genuine shipped component styles — proportions, states
+   and transitions are the real designer's, only color tokens are swapped.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── surface sets ── */
+.set-1 {
+	background: var(--set-1);
+	border: 2px solid var(--set-1-fg2);
+	border-radius: var(--radius);
+}
+.set-2 {
+	background: var(--set-2);
+	border: 2px solid var(--set-2-fg2);
+	border-radius: var(--radius);
+}
+.set-3 {
+	background: var(--set-3);
+	border-radius: var(--radius);
+} /* lifted, no border */
+.set-4 {
+	background: var(--set-4);
+	border: 2px solid var(--highlight);
+	border-radius: var(--radius);
+}
+
+/* small ALL-CAPS group heading above lists/cards (stardance §2.1) */
+.small-head {
+	font-size: 0.82rem;
+	font-weight: 700;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--set-1-fg2);
+	margin: 0 0 var(--space-s);
+}
+
+/* ── action buttons (stardance _action_button.scss) ── */
+.action-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--space-xs);
+	border-radius: 999px;
+	border: 2px solid transparent;
+	font-family: var(--font-body);
+	font-weight: 700;
+	line-height: 1;
+	text-decoration: none;
+	cursor: pointer;
+	appearance: none;
+	transition:
+		background-color 200ms ease,
+		border-color 200ms ease,
+		color 200ms ease;
+}
+.action-btn__icon {
+	flex-shrink: 0;
+	width: 1.1em;
+	height: 1.1em;
+	transition: transform 200ms ease;
+}
+.action-btn--small {
+	font-size: 16px;
+	padding: 5px 16px;
+}
+.action-btn--large {
+	font-size: 1.05rem;
+	padding: 12px 32px;
+}
+.action-btn--large:hover .action-btn__icon--trailing,
+.action-btn--large:focus-visible .action-btn__icon--trailing {
+	transform: translateX(6px);
+}
+.action-btn--primary {
+	background-color: var(--highlight);
+	border-color: var(--highlight);
+	color: var(--set-1);
+}
+.action-btn--primary:hover,
+.action-btn--primary:focus-visible {
+	background-color: var(--highlight-2);
+	border-color: var(--highlight-2);
+}
+.action-btn--primary:active {
+	background-color: #fff;
+	border-color: #fff;
+}
+.action-btn--secondary {
+	background-color: var(--set-2);
+	border-color: var(--set-3-fg2);
+	color: var(--ink);
+}
+.action-btn--secondary:hover,
+.action-btn--secondary:focus-visible {
+	border-color: var(--highlight-2);
+	color: var(--highlight-2);
+}
+.action-btn--destructive {
+	background-color: transparent;
+	border-color: var(--berry);
+	color: var(--berry);
+}
+.action-btn--destructive:hover,
+.action-btn--destructive:focus-visible {
+	background-color: var(--berry);
+	color: var(--set-1);
+}
+.action-btn:disabled,
+.action-btn--disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+/* ── status pill (stardance _status_pill.scss) ── */
+.status-pill {
+	display: inline-flex;
+	align-items: center;
+	padding: 3px 11px;
+	border-radius: 999px;
+	font-size: 0.78rem;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	background: rgba(255, 246, 230, 0.08);
+	color: var(--set-1-fg2);
+	white-space: nowrap;
+}
+.status-pill--pending,
+.status-pill--soft_approved {
+	background: var(--caramel-soft);
+	color: var(--caramel);
+}
+.status-pill--approved,
+.status-pill--paid {
+	background: var(--matcha-soft);
+	color: var(--matcha);
+}
+.status-pill--rejected,
+.status-pill--void {
+	background: var(--berry-soft);
+	color: var(--berry);
+}
+.status-pill--draft {
+	background: rgba(255, 246, 230, 0.08);
+	color: var(--set-1-fg2);
+}
+
+/* ── admin / manageable marker (stardance §1.5): dashed caramel border ── */
+.manageable {
+	border: 2px dashed var(--caramel);
+}
+.manageable:hover,
+.manageable:focus-visible {
+	border-color: var(--caramel);
+}
+.admin-pill {
+	display: inline-block;
+	background: var(--caramel-soft);
+	color: var(--caramel);
+	font-weight: 700;
+	font-size: 0.66rem;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	padding: 3px 9px;
+	border-radius: 999px;
 }
 
 /* ---------- mobile ---------- */
@@ -301,5 +607,15 @@ footer {
 	.content,
 	footer {
 		min-width: min(55rem, 100%);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.001ms !important;
+		transition-duration: 0.001ms !important;
+		scroll-behavior: auto !important;
 	}
 }

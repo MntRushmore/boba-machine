@@ -2,9 +2,9 @@
 
 <div class="page">
 	<h1 class="heading">not eligible</h1>
-	<p class="body">onekey is only open to hack clubbers aged 13-18. either your age isn't in that range, or your hack club identity verification is over 18 or didn't go through.</p>
+	<p class="body">boba drops is only open to hack clubbers aged 13-18. either your age isn't in that range, or your hack club identity verification is over 18 or didn't go through.</p>
 	<p class="body">if you think this is a mistake, check or redo your verification at <a href="https://auth.hackclub.com/verifications/new">auth.hackclub.com</a> or reach out in the hack club slack.</p>
-	<a href="/" class="back">back to landing</a>
+	<a href="https://boba.hackclub.com/" class="back">back to boba drops</a>
 </div>
 
 <style>
@@ -29,7 +29,7 @@
 
 	.body {
 		font-size: 1.1rem;
-		color: #555;
+		color: var(--color-text-soft);
 		margin: 0 0 1rem;
 		line-height: 1.6;
 	}
@@ -40,12 +40,14 @@
 		font-weight: bold;
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
-		color: #888;
+		color: var(--color-text-soft);
+		opacity: 0.7;
 		text-decoration: none;
 		display: inline-block;
 	}
 
 	.back:hover {
-		color: black;
+		color: var(--accent);
+		opacity: 1;
 	}
 </style>

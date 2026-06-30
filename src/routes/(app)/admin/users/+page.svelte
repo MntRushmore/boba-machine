@@ -169,7 +169,7 @@
 		width: 100%;
 		box-sizing: border-box;
 		padding: 0.5rem 0.85rem;
-		font-family: 'Phantom Sans', sans-serif;
+		font-family: var(--font-body);
 		font-size: 0.85rem;
 		background: var(--color-bg);
 		color: var(--color-text);

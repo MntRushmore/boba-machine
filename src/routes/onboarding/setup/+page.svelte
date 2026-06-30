@@ -25,17 +25,20 @@
 	let skippedAddress = $state(false);
 	const addressDone = $derived(hasAddress || skippedAddress);
 
-	const canProceed = $derived(linked && addressDone);
+	// Hackatime is optional in Boba Drops, so it doesn't gate finishing setup —
+	// only the address step (where the boba gets sent) does.
+	const canProceed = $derived(addressDone);
+
 </script>
 
 <h1 class="ob-title">let's get you setup</h1>
 
 <section class="ob-card hackatime-card">
 	<div class="hackatime-card-content">
-		<span class="ob-card-label">hackatime</span>
+		<span class="ob-card-label">hackatime <span class="optional-tag">optional</span></span>
 		<p class="ob-text">
-			hackatime is the tool you'll use to track your coding time!<br />if you want to learn more or
-			need help setting up, see our tutorial below!
+			want to track your coding time as you build? link hackatime — totally optional, but a nice
+			way to see your hours add up.
 		</p>
 		<div class="hackatime-action">
 		{#if linked}
@@ -257,6 +260,20 @@
 </div>
 
 <style>
+	.optional-tag {
+		display: inline-block;
+		font-size: 0.6rem;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		background: var(--taro-soft);
+		color: var(--taro);
+		padding: 2px 7px;
+		border-radius: 999px;
+		margin-left: 0.4rem;
+		vertical-align: middle;
+	}
+
 	.hackatime-card {
 		display: flex;
 		align-items: center;
@@ -293,7 +310,7 @@
 		background: var(--color-text);
 		color: var(--color-bg);
 		font-weight: bold;
-		border: solid var(--border-width);
+		border: var(--border-width) solid var(--set-2-fg2);
 		border-color: var(--color-text);
 		border-radius: var(--radius-pill);
 		padding: 0.6rem 1.2rem;
@@ -471,7 +488,7 @@
 		border-radius: var(--radius-pill);
 		padding: 0.6rem 1.2rem;
 		cursor: pointer;
-		border: solid var(--border-width);
+		border: var(--border-width) solid var(--set-2-fg2);
 		border-color: var(--color-text);
 		background: var(--color-text);
 		color: var(--color-bg);

@@ -111,7 +111,7 @@ export const actions = {
 			const absFormatted = formatHours(Math.abs(seconds));
 			await sendSlackDM(
 				targetUser.slackId,
-				`*${absFormatted} has been ${verb} your onekey balance.*\n\n_"${message}"_\n\nView your balance at <https://onekey.hackclub.com/shop|onekey.hackclub.com/shop>.`
+				`*${absFormatted} has been ${verb} your Boba Drops balance.*\n\n_"${message}"_\n\nView your balance at <https://boba.hackclub.com/shop|boba.hackclub.com/shop>.`
 			);
 		}
 

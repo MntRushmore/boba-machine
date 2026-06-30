@@ -1,5 +1,5 @@
 {
-	"name": "onekey-sv",
+	"name": "boba-drops",
 	"private": true,
 	"version": "0.0.1",
 	"type": "module",
@@ -43,6 +43,7 @@
 	},
 	"dependencies": {
 		"highlight.js": "^11.11.1",
-		"marked": "^18.0.5"
+		"marked": "^18.0.5",
+		"monaco-editor": "^0.55.1"
 	}
 }

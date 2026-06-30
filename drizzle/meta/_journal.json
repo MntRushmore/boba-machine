@@ -204,6 +204,27 @@
       "when": 1782864000000,
       "tag": "0028_add_fraud_check",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1782844342641,
+      "tag": "0029_boba_grants_and_tracks",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1782848986160,
+      "tag": "0030_boba_workshops",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1782849755863,
+      "tag": "0031_boba_editor_github",
+      "breakpoints": true
     }
   ]
 }

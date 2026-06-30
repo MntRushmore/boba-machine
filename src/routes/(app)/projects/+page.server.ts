@@ -5,10 +5,9 @@ import { db } from '$lib/server/db';
 import { projects, users } from '$lib/server/db/schema';
 import { eq, asc } from 'drizzle-orm';
 import { uploadImageBlob } from '$lib/server/cdn';
-import { decryptToken } from '$lib/server/session';
+import { decryptToken, encryptionKey } from '$lib/server/session';
 
 const HACKATIME_BASE_URL = 'https://hackatime.hackclub.com';
-const DEV_ENCRYPTION_KEY = '0'.repeat(64);
 
 export async function load({ locals }) {
 	if (!locals.user) redirect(302, '/login');
@@ -31,7 +30,7 @@ export async function load({ locals }) {
 	let htSecondsMap: Record<string, number> = {};
 	if (dbUser.hackatimeTokenCt && dbUser.hackatimeTokenIv && dbUser.hackatimeTokenTag) {
 		try {
-			const encKey = Buffer.from(env.TOKEN_ENCRYPTION_KEY || (dev ? DEV_ENCRYPTION_KEY : ''), 'hex');
+			const encKey = encryptionKey();
 			const accessToken = decryptToken(dbUser.hackatimeTokenCt, dbUser.hackatimeTokenIv, dbUser.hackatimeTokenTag, encKey);
 			const res = await fetch(`${HACKATIME_BASE_URL}/api/v1/authenticated/projects?include_archived=true`, {
 				headers: { Authorization: `Bearer ${accessToken}` }
@@ -90,6 +89,7 @@ export const actions = {
 			.values({ userId: dbUser.id, name, description, screenshotUrl, repoUrl, demoUrl })
 			.returning({ id: projects.id });
 
-		redirect(302, `/projects/${project.id}`);
+		// Drop the builder straight into the editor to start building their site.
+		redirect(302, `/projects/${project.id}/edit`);
 	}
 };

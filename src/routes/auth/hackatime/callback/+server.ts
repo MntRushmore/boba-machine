@@ -4,11 +4,10 @@ import { dev } from '$app/environment';
 import { db } from '$lib/server/db';
 import { sessions, users } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
-import { hashToken, encryptToken } from '$lib/server/session';
+import { hashToken, encryptToken, encryptionKey } from '$lib/server/session';
 import type { RequestHandler } from './$types';
 
 const HACKATIME_BASE_URL = 'https://hackatime.hackclub.com';
-const DEV_ENCRYPTION_KEY = '0'.repeat(64);
 
 export const GET: RequestHandler = async ({ url, cookies }) => {
 	const code = url.searchParams.get('code');
@@ -40,8 +39,8 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		body: new URLSearchParams({
 			grant_type: 'authorization_code',
-			client_id: env.HACKATIME_CLIENT_ID,
-			client_secret: env.HACKATIME_CLIENT_SECRET,
+			client_id: env.HACKATIME_CLIENT_ID ?? '',
+			client_secret: env.HACKATIME_CLIENT_SECRET ?? '',
 			redirect_uri: redirectUri,
 			code
 		})
@@ -58,7 +57,7 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 	const hackatimeUser = await meRes.json();
 	const hackatimeUserId = String(hackatimeUser.data?.id ?? hackatimeUser.id ?? '');
 
-	const encKey = Buffer.from(env.TOKEN_ENCRYPTION_KEY || (dev ? DEV_ENCRYPTION_KEY : ''), 'hex');
+	const encKey = encryptionKey();
 	const { ct, iv, tag } = encryptToken(access_token, encKey);
 
 	await db

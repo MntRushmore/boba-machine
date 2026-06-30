@@ -4,11 +4,10 @@ import { dev } from '$app/environment';
 import { db } from '$lib/server/db';
 import { sessions, users } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
-import { hashToken, decryptToken } from '$lib/server/session';
+import { hashToken, decryptToken, encryptionKey } from '$lib/server/session';
 import type { RequestHandler } from './$types';
 
 const HACKATIME_BASE_URL = 'https://hackatime.hackclub.com';
-const DEV_ENCRYPTION_KEY = '0'.repeat(64);
 
 export const GET: RequestHandler = async ({ cookies }) => {
 	const rawToken = cookies.get('hca_session');
@@ -29,7 +28,7 @@ export const GET: RequestHandler = async ({ cookies }) => {
 		error(403, 'hackatime not linked');
 	}
 
-	const encKey = Buffer.from(env.TOKEN_ENCRYPTION_KEY || (dev ? DEV_ENCRYPTION_KEY : ''), 'hex');
+	const encKey = encryptionKey();
 	const accessToken = decryptToken(u.hackatimeTokenCt, u.hackatimeTokenIv, u.hackatimeTokenTag, encKey);
 
 	const res = await fetch(`${HACKATIME_BASE_URL}/api/v1/authenticated/projects`, {

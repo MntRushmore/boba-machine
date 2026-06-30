@@ -2,8 +2,6 @@
 	import { enhance } from '$app/forms';
 	import { onMount, untrack } from 'svelte';
 	import { page } from '$app/state';
-	import { darkMode } from '$lib/stores/theme';
-	import { keySfxEnabled } from '$lib/stores/sfx';
 
 	let { data } = $props();
 
@@ -23,9 +21,6 @@
 		}
 	});
 
-	let darkForm: HTMLFormElement;
-	let darkInput: HTMLInputElement;
-
 	const hasAddress = $derived(
 		!!(
 			data.user?.street_address ||
@@ -44,7 +39,7 @@
 	{#if data.user?.avatar_url}
 		<img class="profile-avatar" src={data.user.avatar_url} alt="avatar" />
 	{/if}
-	<h1 class="heading">{data.user?.nickname ?? data.user?.name ?? 'onekeyer'}</h1>
+	<h1 class="heading">{data.user?.nickname ?? data.user?.name ?? 'your account'}</h1>
 </div>
 
 <div class="bento">
@@ -81,50 +76,11 @@
 	</div>
 
 	<div class="card">
-		<span class="card-label">settings</span>
-		<div class="settings-list">
-			<form method="POST" action="?/saveDarkMode" bind:this={darkForm} use:enhance={() => () => {}}>
-				<input
-					type="hidden"
-					name="dark_mode_enabled"
-					bind:this={darkInput}
-					value={$darkMode ? 'true' : 'false'}
-				/>
-				<label class="toggle-row">
-					<span class="toggle-label">dark mode</span>
-					<button
-						type="button"
-						class="toggle"
-						class:on={$darkMode}
-						role="switch"
-						aria-checked={$darkMode}
-						aria-label="dark mode"
-						onclick={() => {
-							const next = !$darkMode;
-							darkMode.set(next);
-							darkInput.value = next ? 'true' : 'false';
-							darkForm.requestSubmit();
-						}}
-					>
-						<span class="toggle-thumb"></span>
-					</button>
-				</label>
-			</form>
-			<label class="toggle-row">
-				<span class="toggle-label">sidebar key sfx</span>
-				<button
-					type="button"
-					class="toggle"
-					class:on={$keySfxEnabled}
-					role="switch"
-					aria-checked={$keySfxEnabled}
-					aria-label="sidebar key sfx"
-					onclick={() => keySfxEnabled.toggle()}
-				>
-					<span class="toggle-thumb"></span>
-				</button>
-			</label>
-		</div>
+		<span class="card-label">your reward</span>
+		<p class="reward-note">
+			approved sites earn a <strong>$5 boba grant</strong>. for individual submissions we mail it to
+			the address below — keep it up to date so your boba finds you.
+		</p>
 	</div>
 
 	<div class="card card-full" bind:this={addressCardEl}>
@@ -281,7 +237,7 @@
 		height: clamp(3rem, 4.5vw, 5rem);
 		border-radius: 50%;
 		object-fit: cover;
-		border: var(--border-width) solid;
+		border: var(--border-width) solid var(--set-2-fg2);
 		flex-shrink: 0;
 	}
 
@@ -311,7 +267,7 @@
 	.card {
 		background: var(--color-bg);
 		border-radius: var(--radius-card);
-		border: solid var(--border-width);
+		border: var(--border-width) solid var(--set-2-fg2);
 		padding: clamp(1rem, 1.5vw, 1.75rem) clamp(1.1rem, 1.5vw, 1.75rem);
 		min-height: clamp(8rem, 12vh, 16rem);
 		box-sizing: border-box;
@@ -333,6 +289,16 @@
 		color: var(--color-text-soft);
 		margin-bottom: 1.25rem;
 		font-weight: bold;
+	}
+
+	.reward-note {
+		margin: 0;
+		font-size: 0.98rem;
+		line-height: 1.55;
+		color: var(--color-text-soft);
+	}
+	.reward-note strong {
+		color: var(--ink);
 	}
 
 	.field-list {
@@ -387,61 +353,6 @@
 
 	.logout-link:hover {
 		color: var(--color-text);
-	}
-
-	/* settings */
-
-	.settings-list {
-		display: flex;
-		flex-direction: column;
-		gap: 0.75rem;
-	}
-
-	.toggle-row {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 1rem;
-		cursor: pointer;
-	}
-
-	.toggle-label {
-		font-size: 0.85rem;
-		font-weight: 500;
-		text-transform: uppercase;
-		letter-spacing: 0.08em;
-	}
-
-	.toggle {
-		position: relative;
-		width: 2.4rem;
-		height: 1.35rem;
-		border-radius: 9999px;
-		background: var(--rail-label);
-		border: none;
-		cursor: pointer;
-		flex-shrink: 0;
-		transition: background 0.18s;
-		padding: 0;
-	}
-
-	.toggle.on {
-		background: var(--color-text);
-	}
-
-	.toggle-thumb {
-		position: absolute;
-		top: 0.18rem;
-		left: 0.18rem;
-		width: 0.95rem;
-		height: 0.95rem;
-		border-radius: 50%;
-		background: var(--color-bg);
-		transition: transform 0.18s;
-	}
-
-	.toggle.on .toggle-thumb {
-		transform: translateX(1.05rem);
 	}
 
 	/* address */
@@ -556,7 +467,7 @@
 		border-radius: var(--radius-pill);
 		padding: 0.45rem 0.9rem;
 		cursor: pointer;
-		border: solid var(--border-width);
+		border: var(--border-width) solid var(--set-2-fg2);
 		font-family: inherit;
 	}
 

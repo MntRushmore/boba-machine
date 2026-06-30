@@ -2,34 +2,33 @@
 	const steps = [
 		{
 			title: 'come up with an idea',
-			desc: "we'll help you brainstorm something you're happy with!"
+			desc: "we'll help you brainstorm a personal site you're happy with!"
 		},
 		{
-			title: 'make your project',
-			desc: 'work on your project over some amount of hours, logging your time using hackatime!'
+			title: 'build your site',
+			desc: 'make a personal website with HTML & CSS, logging your time using hackatime!'
 		},
 		{
-			title: 'submit your project',
-			desc: 'once your project is ready for others to see, share it with other teens doing the same thing!'
+			title: 'submit your site',
+			desc: 'host it on GitHub Pages and share it with other teens doing the same thing!'
 		},
 		{
-			title: 'claim your prize(s)!',
-			desc: 'get a customizable one key macropad for 5 hours, or choose any number of prizes from our shop!'
+			title: 'get your boba!',
+			desc: 'once your site is approved, get a $5 grant to buy yourself some boba 🧋'
 		}
 	];
 </script>
 
-<h1 class="ob-title">welcome to onekey!</h1>
+<h1 class="ob-title">welcome to boba drops!</h1>
 
 <section class="ob-card">
 	<p class="ob-text">
-		for developers, there are a million different things that you could make, but you're never happy
-		with what you come up with. but when you limit your options, every idea becomes much more
-		creative.
+		your first website is one of the most satisfying things you'll ever build — a little corner of
+		the internet that's entirely yours. and the best part? you don't need any experience to start.
 	</p>
 	<p class="ob-text">
-		onekey restricts you to only one mode of input - a single key on your keyboard. it's up to you
-		to turn this key into unlimited possibilities.
+		boba drops walks you through building a personal site with just HTML & CSS. ship it, and we'll
+		send you a grant to buy yourself some boba.
 	</p>
 </section>
 

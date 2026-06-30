@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, text, boolean, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { pgTable, serial, integer, text, boolean, timestamp, uuid, unique } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
 export const task = pgTable('task', {
@@ -31,6 +31,12 @@ export const users = pgTable('users', {
 	hackatimeTokenCt: text('hackatime_token_ct'),
 	hackatimeTokenIv: text('hackatime_token_iv'),
 	hackatimeTokenTag: text('hackatime_token_tag'),
+	// GitHub OAuth (Phase 4) — for pushing the user's site to a repo in their
+	// own account + enabling Pages. Token encrypted (AES-256-GCM) like hackatime's.
+	githubLogin: text('github_login'),
+	githubTokenCt: text('github_token_ct'),
+	githubTokenIv: text('github_token_iv'),
+	githubTokenTag: text('github_token_tag'),
 	streetAddress: text('street_address'),
 	addressLine2: text('address_line_2'),
 	locality: text('locality'),
@@ -72,13 +78,26 @@ export const projects = pgTable('projects', {
 	description: text('description'),
 	screenshotUrl: text('screenshot_url'),
 	repoUrl: text('repo_url'),
+	// The published site, hosted on GitHub Pages (public repo). For Boba Drops this
+	// is the deliverable; in the legacy onekey model it was a generic demo link.
 	demoUrl: text('demo_url'),
 	hackatimeProject: text('hackatime_project'),
 	aiDeclaration: text('ai_declaration'),
+	// Boba Drops track: 'individual' (US-only, cash to the teen) or 'workshop'
+	// (worldwide, grant to the club leader). Set when the project is submitted.
+	submissionType: text('submission_type'),
+	// For workshop submissions, the workshop this project belongs to (Phase 3).
+	// Nullable now; the workshops table + FK land with the leader system.
+	workshopId: integer('workshop_id'),
 	// Reviewer-set flag: project is under Fraud Squad investigation. Admin-only
 	// toggle; surfaces a red tint + badge in the review queue and an internal-only
 	// comment on the project timeline. Never exposed to the project's author.
 	fraudCheck: boolean('fraud_check').notNull().default(false),
+	// GitHub publishing (Phase 4). The repo we created/pushed in the user's
+	// account and when it was last published. demoUrl holds the Pages URL.
+	githubRepo: text('github_repo'), // "owner/repo"
+	githubRepoUrl: text('github_repo_url'),
+	publishedAt: timestamp('published_at', { withTimezone: true }),
 	createdAt: timestamp('created_at', { withTimezone: true })
 		.notNull()
 		.default(sql`now()`),
@@ -86,6 +105,25 @@ export const projects = pgTable('projects', {
 		.notNull()
 		.default(sql`now()`)
 });
+
+// The DB working copy of a site's files, edited in the in-browser Monaco editor.
+// `path` is the repo-relative path (e.g. "index.html", "style.css"). On publish
+// these are pushed to the user's GitHub repo. (path, projectId) is unique.
+export const projectFiles = pgTable(
+	'project_files',
+	{
+		id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+		projectId: integer('project_id')
+			.notNull()
+			.references(() => projects.id, { onDelete: 'cascade' }),
+		path: text('path').notNull(),
+		content: text('content').notNull().default(''),
+		updatedAt: timestamp('updated_at', { withTimezone: true })
+			.notNull()
+			.default(sql`now()`)
+	},
+	(t) => [unique('project_files_project_path_unique').on(t.projectId, t.path)]
+);
 
 export const projectApprovals = pgTable('project_approvals', {
 	id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
@@ -96,9 +134,18 @@ export const projectApprovals = pgTable('project_approvals', {
 		.notNull()
 		.references(() => users.id, { onDelete: 'cascade' }),
 	reviewerId: uuid('reviewer_id').references(() => users.id, { onDelete: 'set null' }),
-	submittedSeconds: integer('submitted_seconds').notNull(),
+	// Legacy onekey hours model — nullable now that Boba Drops approves a site
+	// rather than crediting hours. Existing rows keep their values.
+	submittedSeconds: integer('submitted_seconds'),
 	approvedSeconds: integer('approved_seconds'),
+	// Snapshot of the track this submission was made under.
+	submissionType: text('submission_type'),
 	status: text('status').notNull().default('pending'),
+	// A workshop leader can endorse a member's submission (vouch it's complete);
+	// this surfaces in the review queue. Endorsement does NOT approve — a Hack
+	// Club reviewer still makes the call.
+	endorsedAt: timestamp('endorsed_at', { withTimezone: true }),
+	endorsedById: uuid('endorsed_by_id').references(() => users.id, { onDelete: 'set null' }),
 	publicMessage: text('public_message'),
 	internalNote: text('internal_note'),
 	aiDeclaration: text('ai_declaration'),
@@ -270,9 +317,104 @@ export const approvedSubmissions = pgTable('approved_submissions', {
 		.default(sql`now()`)
 });
 
+// One row per approved submission: the $5 Boba Drops grant and its fulfillment
+// state. payoutTarget records who the money goes to — the teen (individual,
+// US-only, mailed cash) or the club leader (workshop, worldwide). Admins mark a
+// grant 'sent' once it's been paid out; there's no payment API yet.
+export const grants = pgTable('grants', {
+	id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+	approvalId: integer('approval_id')
+		.notNull()
+		.unique()
+		.references(() => projectApprovals.id, { onDelete: 'cascade' }),
+	projectId: integer('project_id')
+		.notNull()
+		.references(() => projects.id, { onDelete: 'cascade' }),
+	userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
+	// 'individual' | 'workshop'
+	submissionType: text('submission_type').notNull(),
+	// 'teen' | 'leader' — who receives the payout
+	payoutTarget: text('payout_target').notNull(),
+	// Workshop this grant belongs to, if any (Phase 3).
+	workshopId: integer('workshop_id'),
+	amountCents: integer('amount_cents').notNull().default(500),
+	currency: text('currency').notNull().default('USD'),
+	// 'pending' | 'sent' | 'void'
+	status: text('status').notNull().default('pending'),
+	// recipient snapshot at approval time
+	recipientName: text('recipient_name'),
+	recipientEmail: text('recipient_email'),
+	recipientCountry: text('recipient_country'),
+	sentById: uuid('sent_by_id').references(() => users.id, { onDelete: 'set null' }),
+	sentAt: timestamp('sent_at', { withTimezone: true }),
+	note: text('note'),
+	createdAt: timestamp('created_at', { withTimezone: true })
+		.notNull()
+		.default(sql`now()`)
+});
+
 export const reviewers = pgTable('reviewers', {
 	id: uuid('id').primaryKey().defaultRandom(),
 	hcaId: text('hca_id').notNull().unique(),
+	createdAt: timestamp('created_at', { withTimezone: true })
+		.notNull()
+		.default(sql`now()`)
+});
+
+// A Boba Drops workshop run by a club leader. Created when an admin approves a
+// workshop application. Members join with `joinCode`; their approved sites
+// route the $5 grant to the leader.
+export const workshops = pgTable('workshops', {
+	id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+	leaderId: uuid('leader_id')
+		.notNull()
+		.references(() => users.id, { onDelete: 'cascade' }),
+	name: text('name').notNull(),
+	// School / club / location context, shown to admins and on the roster.
+	organization: text('organization'),
+	// Short, shareable, case-insensitive join code (stored uppercase). Unique.
+	joinCode: text('join_code').notNull().unique(),
+	// 'active' | 'closed'
+	status: text('status').notNull().default('active'),
+	createdAt: timestamp('created_at', { withTimezone: true })
+		.notNull()
+		.default(sql`now()`)
+});
+
+// Membership: a builder belongs to at most one workshop (enforced by the unique
+// userId). Joining attaches them so their submissions default to the workshop track.
+export const workshopMembers = pgTable('workshop_members', {
+	id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+	workshopId: integer('workshop_id')
+		.notNull()
+		.references(() => workshops.id, { onDelete: 'cascade' }),
+	userId: uuid('user_id')
+		.notNull()
+		.unique()
+		.references(() => users.id, { onDelete: 'cascade' }),
+	joinedAt: timestamp('joined_at', { withTimezone: true })
+		.notNull()
+		.default(sql`now()`)
+});
+
+// Application to run a workshop. Submitted in-app; an admin approves (which
+// creates the workshop + makes the applicant a leader) or rejects.
+export const workshopApplications = pgTable('workshop_applications', {
+	id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+	applicantId: uuid('applicant_id')
+		.notNull()
+		.references(() => users.id, { onDelete: 'cascade' }),
+	workshopName: text('workshop_name').notNull(),
+	organization: text('organization'),
+	// Where/when they plan to run it, expected size, etc. — free text for the admin.
+	details: text('details'),
+	// 'pending' | 'approved' | 'rejected'
+	status: text('status').notNull().default('pending'),
+	reviewerNote: text('reviewer_note'),
+	// The workshop created on approval (null until approved).
+	workshopId: integer('workshop_id').references(() => workshops.id, { onDelete: 'set null' }),
+	decidedById: uuid('decided_by_id').references(() => users.id, { onDelete: 'set null' }),
+	decidedAt: timestamp('decided_at', { withTimezone: true }),
 	createdAt: timestamp('created_at', { withTimezone: true })
 		.notNull()
 		.default(sql`now()`)

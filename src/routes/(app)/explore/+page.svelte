@@ -132,7 +132,7 @@
 	.project-card {
 		background: var(--color-bg);
 		border-radius: var(--radius-card);
-		border: solid var(--border-width);
+		border: var(--border-width) solid var(--set-2-fg2);
 		padding: clamp(1.25rem, 2vw, 2rem);
 		text-decoration: none;
 		color: inherit;

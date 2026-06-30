@@ -4,6 +4,12 @@
 import postgres from 'postgres';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+
+// Resolve the migrations folder relative to THIS file so it works in the
+// container (/app/drizzle), in local dev, and anywhere else.
+const MIGRATIONS_FOLDER = resolve(dirname(fileURLToPath(import.meta.url)), 'drizzle');
 
 const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) {
@@ -46,8 +52,8 @@ for (const t of tables) {
 const db = drizzle(client);
 
 try {
-	console.log('[migrate] Applying migrations...');
-	await migrate(db, { migrationsFolder: '/app/drizzle' });
+	console.log('[migrate] Applying migrations from', MIGRATIONS_FOLDER);
+	await migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
 	console.log('[migrate] Done.');
 } catch (e) {
 	console.error('[migrate] FAILED:', e.message);

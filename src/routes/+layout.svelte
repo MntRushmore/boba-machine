@@ -6,8 +6,8 @@
 </script>
 
 <svelte:head>
-	<title>onekey</title>
-	<link rel="icon" type="image/x-icon" href="/favicon.ico" />
+	<title>Boba Drops</title>
+	<link rel="icon" type="image/png" href="/img/boba-favicon.png" />
 </svelte:head>
 
 <NavigationProgress />

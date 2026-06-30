@@ -29,13 +29,21 @@
 			<span class="card-label">shop</span>
 			<p class="card-desc">manage shop categories and items</p>
 		</a>
+		<a href="/admin/grants" class="card">
+			<span class="card-label">grants</span>
+			<p class="card-desc">$5 boba grants from approved sites — mark them paid</p>
+		</a>
 		<a href="/admin/orders" class="card">
 			<span class="card-label">orders</span>
-			<p class="card-desc">view and fulfill orders (oldest first)</p>
+			<p class="card-desc">view and fulfill shop orders (oldest first)</p>
 		</a>
 		<a href="/admin/reviewers" class="card">
 			<span class="card-label">reviewers</span>
 			<p class="card-desc">manage who can access review pages</p>
+		</a>
+		<a href="/admin/workshops" class="card">
+			<span class="card-label">workshops</span>
+			<p class="card-desc">approve workshop applications + see active clubs</p>
 		</a>
 		<a href="/admin/guides" class="card">
 			<span class="card-label">guides</span>

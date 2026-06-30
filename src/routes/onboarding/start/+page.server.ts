@@ -5,14 +5,14 @@ import { eq } from 'drizzle-orm';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
-	// Can't reach the final step without first linking Hackatime in the setup step.
-	if (!locals.user?.hackatime_linked) redirect(302, '/onboarding/setup');
+	if (!locals.user) redirect(302, '/?needs_auth=1');
+	// Hackatime is optional in Boba Drops — no gate here; the setup step (address)
+	// already ran before this final step.
 };
 
 export const actions: Actions = {
 	finish: async ({ request, locals }) => {
 		if (!locals.user) redirect(302, '/?needs_auth=1');
-		if (!locals.user.hackatime_linked) redirect(302, '/onboarding/setup');
 
 		const data = await request.formData();
 		const raw = data.get('destination') as string | null;

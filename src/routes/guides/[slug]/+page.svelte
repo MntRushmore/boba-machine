@@ -46,7 +46,7 @@
 </script>
 
 <svelte:head>
-	<title>{guide.title} — onekey guides</title>
+	<title>{guide.title} — Boba Drops guides</title>
 	<meta name="description" content={guide.description} />
 </svelte:head>
 
@@ -199,7 +199,7 @@
 	}
 
 	.nav-item {
-		font-family: 'Phantom Sans', sans-serif;
+		font-family: var(--font-body);
 		font-size: 0.88rem;
 		text-align: left;
 		padding: 0.45rem 0.75rem;
@@ -246,7 +246,7 @@
 	}
 
 	.mobile-nav-toggle {
-		font-family: 'Phantom Sans', sans-serif;
+		font-family: var(--font-body);
 		font-size: 0.85rem;
 		border: 1px solid #ddd;
 		border-radius: 6px;
@@ -267,7 +267,7 @@
 	}
 
 	.mobile-nav-item {
-		font-family: 'Phantom Sans', sans-serif;
+		font-family: var(--font-body);
 		font-size: 0.9rem;
 		text-align: left;
 		padding: 0.55rem 0.75rem;

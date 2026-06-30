@@ -49,7 +49,7 @@
 					<th>project</th>
 					<th>submitted by</th>
 					<th>verdict</th>
-					<th>hours</th>
+					<th>track</th>
 					<th>submitted</th>
 					<th>reviewed</th>
 					<th>reviewer</th>
@@ -66,12 +66,7 @@
 						<td>
 							<span class="badge badge-{ship.status}">{statusLabel(ship.status)}</span>
 						</td>
-						<td class="td-hours">
-							{formatHours(ship.submittedSeconds)}
-							{#if ship.approvedSeconds != null && ship.approvedSeconds !== ship.submittedSeconds}
-								<span class="approved">→ {formatHours(ship.approvedSeconds)}</span>
-							{/if}
-						</td>
+						<td class="td-hours">{ship.submissionType ?? '—'}</td>
 						<td class="td-date">{fmtDate(ship.submittedAt)}</td>
 						<td class="td-date">{fmtDate(ship.reviewedAt)}</td>
 						<td>{ship.reviewer ?? '—'}</td>

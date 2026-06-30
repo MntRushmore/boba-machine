@@ -50,7 +50,7 @@ export const GET: RequestHandler = async ({ cookies, url }) => {
 	const redirectUri = env.HACKATIME_REDIRECT_URI || `${url.origin}/auth/hackatime/callback`;
 
 	const params = new URLSearchParams({
-		client_id: env.HACKATIME_CLIENT_ID,
+		client_id: env.HACKATIME_CLIENT_ID ?? '',
 		redirect_uri: redirectUri,
 		response_type: 'code',
 		scope: 'profile read',

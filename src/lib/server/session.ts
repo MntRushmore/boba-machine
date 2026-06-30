@@ -1,4 +1,26 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
+import { env } from '$env/dynamic/private';
+import { dev } from '$app/environment';
+
+// All-zero key used ONLY in local dev so the app runs without configuring a real
+// key. Never reachable in a production build.
+const DEV_ENCRYPTION_KEY = '0'.repeat(64);
+
+/**
+ * The AES-256-GCM key for stored OAuth tokens. Resolves TOKEN_ENCRYPTION_KEY,
+ * falling back to a fixed dev key in dev only. In production a missing/invalid
+ * key throws LOUDLY at the call site instead of silently producing a 0-length
+ * key that crashes mid-OAuth with a cryptic error.
+ */
+export function encryptionKey(): Buffer {
+	const hex = env.TOKEN_ENCRYPTION_KEY || (dev ? DEV_ENCRYPTION_KEY : '');
+	if (!/^[0-9a-fA-F]{64}$/.test(hex)) {
+		throw new Error(
+			'TOKEN_ENCRYPTION_KEY must be a 64-char hex string (generate with: openssl rand -hex 32)'
+		);
+	}
+	return Buffer.from(hex, 'hex');
+}
 
 export function encryptToken(plaintext: string, key: Buffer): { ct: string; iv: string; tag: string } {
 	const iv = randomBytes(12);

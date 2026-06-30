@@ -3,16 +3,16 @@
 </script>
 
 <svelte:head>
-	<title>guides — onekey</title>
+	<title>guides — Boba Drops</title>
 	<meta
 		name="description"
-		content="Step-by-step guides to help you build your one-key project and get it shipped."
+		content="Step-by-step guides to help you build your website and get it shipped."
 	/>
 </svelte:head>
 
 <div class="page">
 	<h1 class="section-head">guides</h1>
-	<p class="subhead">step-by-step walkthroughs to help you build, ship, and submit your onekey project.</p>
+	<p class="subhead">step-by-step walkthroughs to help you build, ship, and submit your website.</p>
 
 	{#if data.guides.length === 0}
 		<div class="empty">

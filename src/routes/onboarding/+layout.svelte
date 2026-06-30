@@ -81,7 +81,7 @@
 	:global(.onboarding .ob-card) {
 		background: var(--color-bg);
 		border-radius: var(--radius-card);
-		border: solid var(--border-width);
+		border: var(--border-width) solid var(--set-2-fg2);
 		padding: clamp(1.25rem, 2vw, 2rem);
 		box-sizing: border-box;
 	}
@@ -118,7 +118,7 @@
 		font-weight: bold;
 		/* black border that reads as an extension of the fill, so the next
 		   button matches the outlined back button's overall size */
-		border: solid var(--border-width);
+		border: var(--border-width) solid var(--set-2-fg2);
 		border-color: var(--color-text);
 		border-radius: var(--radius-pill);
 		padding: 0.78rem 1.25rem 0.78rem 1.7rem;
@@ -174,7 +174,7 @@
 		background: var(--color-bg);
 		color: var(--color-text);
 		font-weight: bold;
-		border: solid var(--border-width);
+		border: var(--border-width) solid var(--set-2-fg2);
 		border-radius: var(--radius-pill);
 		padding: 0.78rem 1.7rem 0.78rem 1.25rem;
 		font-size: clamp(1.1rem, 1.5vw, 1.6rem);

@@ -110,7 +110,7 @@ function parseGuide(slug: string, raw: string): { guide: Guide; order: number; d
 		sections
 	};
 
-	return { guide, order: Number(data.order ?? 0), draft: data.draft === true || data.draft === 'true' };
+	return { guide, order: Number(data.order ?? 0), draft: String(data.draft) === 'true' };
 }
 
 export const guides: Guide[] = Object.entries(files)

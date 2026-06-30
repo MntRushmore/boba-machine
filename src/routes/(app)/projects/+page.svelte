@@ -1,11 +1,8 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
-	import { formatHours } from '$lib/format';
 
 	let { data, form } = $props();
-
-	const clockSvg = `<svg fill-rule="evenodd" clip-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="1.414" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" preserveAspectRatio="xMidYMid meet" fill="currentColor" stroke="currentColor" stroke-width="1.5" paint-order="stroke fill"><path d="M26 16c0 5.523-4.477 10-10 10S6 21.523 6 16 10.477 6 16 6s10 4.477 10 10zm2 0c0 6.627-5.373 12-12 12S4 22.627 4 16 9.373 4 16 4s12 5.373 12 12z"/><path d="M15.64 17a1 1 0 0 1-1-1V9a1 1 0 0 1 2 0v7a1 1 0 0 1-1 1z"/><path d="M21.702 19.502a1 1 0 0 1-1.366.366l-5.196-3a1 1 0 0 1 1-1.732l5.196 3a1 1 0 0 1 .366 1.366z"/></svg>`;
 
 	let showErrorToast = $state(page.url.searchParams.get('error') === 'not_found');
 	let errorToastTimer: ReturnType<typeof setTimeout> | undefined;
@@ -55,7 +52,7 @@
 <svelte:window onkeydown={(e) => e.key === 'Escape' && creating && closeModal()} />
 
 <div class="page-header">
-	<h1 class="heading">your projects</h1>
+	<h1 class="heading">your sites</h1>
 </div>
 
 <div class="project-grid">
@@ -72,11 +69,6 @@
 			</div>
 			<div class="project-card-top">
 				<span class="project-name">{project.name}</span>
-				{#if project.totalSeconds > 0}
-					<span class="ht-time"
-						><span class="ht-icon">{@html clockSvg}</span>{formatHours(project.totalSeconds)}</span
-					>
-				{/if}
 			</div>
 			{#if project.description}
 				<p class="project-desc">{project.description}</p>
@@ -86,7 +78,7 @@
 
 	<button type="button" class="project-card new-card bordered" onclick={() => (creating = true)}>
 		<span class="new-plus">+</span>
-		<span class="new-label">new project</span>
+		<span class="new-label">new site</span>
 	</button>
 </div>
 
@@ -188,7 +180,7 @@
 	.project-card {
 		background: var(--color-bg);
 		border-radius: var(--radius-card);
-		border: solid var(--border-width);
+		border: var(--border-width) solid var(--set-2-fg2);
 		padding: clamp(1.25rem, 2vw, 2rem);
 		text-decoration: none;
 		color: inherit;
@@ -224,29 +216,6 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: 0.75rem;
-	}
-
-	.ht-time {
-		font-size: 1.3rem;
-		font-weight: bold;
-		letter-spacing: -0.02em;
-		color: var(--color-text-soft);
-		flex-shrink: 0;
-		display: flex;
-		align-items: center;
-		gap: 0.3rem;
-	}
-
-	.ht-icon {
-		display: flex;
-		width: 1em;
-		height: 1em;
-		flex-shrink: 0;
-	}
-
-	.ht-icon :global(svg) {
-		width: 100%;
-		height: 100%;
 	}
 
 	.project-name {
@@ -336,7 +305,7 @@
 
 	.modal-box {
 		background: var(--color-bg);
-		border: solid var(--border-width);
+		border: var(--border-width) solid var(--set-2-fg2);
 		border-radius: var(--radius-card);
 		padding: clamp(2rem, 3.5vw, 4rem);
 		width: min(1000px, 90vw);
@@ -433,7 +402,7 @@
 		border-radius: var(--radius-pill);
 		padding: 0.65rem 1.4rem;
 		cursor: pointer;
-		border: solid var(--border-width);
+		border: var(--border-width) solid var(--set-2-fg2);
 		font-family: inherit;
 	}
 

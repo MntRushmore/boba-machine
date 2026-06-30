@@ -28,7 +28,7 @@
 				<span class="col-name">project</span>
 				<span class="col-desc">description</span>
 				<span class="col-author">author</span>
-				<span class="col-hours">hours</span>
+				<span class="col-hours">track</span>
 				<span class="col-submitted">submitted</span>
 			</div>
 			{#each data.submitted as project (project.id)}
@@ -39,17 +39,20 @@
 					class:fraud-check={project.fraudCheck}
 				>
 					<span class="col-name">
-						{project.name}
+						<span class="proj-name-text">{project.name}</span>
 						{#if project.fraudCheck}
 							<span class="fraud-tag">fraud check</span>
 						{/if}
 						{#if project.status === 'soft_approved'}
 							<span class="soft-tag">soft accepted</span>
 						{/if}
+						{#if project.endorsedAt}
+							<span class="endorsed-tag">★ endorsed</span>
+						{/if}
 					</span>
 					<span class="col-desc">{project.description ?? '—'}</span>
 					<span class="col-author">{project.submitterSlack ?? project.submitterName ?? project.submitterEmail ?? 'unknown'}</span>
-					<span class="col-hours">{formatHours(project.submittedSeconds)}</span>
+					<span class="col-hours">{project.submissionType ?? '—'}</span>
 					<span class="col-submitted">{new Date(project.submittedAt).toLocaleDateString()}</span>
 				</a>
 			{/each}
@@ -81,7 +84,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		border: 1.5px dashed #2a2f38;
+		border: 1.5px dashed var(--set-2-fg2);
 		border-radius: 12px;
 		padding: 4rem 2rem;
 		color: var(--color-text-soft);
@@ -95,7 +98,7 @@
 	.project-table {
 		display: flex;
 		flex-direction: column;
-		border: solid var(--border-width);
+		border: var(--border-width) solid var(--set-2-fg2);
 		border-radius: var(--radius-card);
 		overflow: hidden;
 	}
@@ -115,7 +118,7 @@
 		text-transform: uppercase;
 		letter-spacing: 0.08em;
 		color: var(--color-text-soft);
-		border-bottom: solid var(--border-width);
+		border-bottom: var(--border-width) solid var(--set-2-fg2);
 	}
 
 	.table-row {
@@ -139,9 +142,17 @@
 
 	.col-name {
 		font-weight: 600;
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		min-width: 0;
+	}
+
+	.proj-name-text {
 		overflow: hidden;
 		white-space: nowrap;
 		text-overflow: ellipsis;
+		min-width: 0;
 	}
 
 	.col-desc,
@@ -174,6 +185,19 @@
 		color: #fff;
 		border-radius: 9999px;
 		padding: 0.1em 0.5em;
+		vertical-align: middle;
+		margin-left: 0.4rem;
+	}
+
+	.endorsed-tag {
+		display: inline-block;
+		font-size: 0.65rem;
+		font-weight: 700;
+		letter-spacing: 0.04em;
+		background: var(--taro-soft);
+		color: var(--taro);
+		border-radius: 9999px;
+		padding: 0.1em 0.55em;
 		vertical-align: middle;
 		margin-left: 0.4rem;
 	}

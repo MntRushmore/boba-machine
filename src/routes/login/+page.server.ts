@@ -16,7 +16,12 @@ export async function load({ cookies, url }) {
 		client_id: env.HCA_CLIENT_ID,
 		redirect_uri: env.HCA_REDIRECT_URI,
 		response_type: 'code',
-		scope: 'openid profile email slack_id verification_status birthdate address',
+		// Scopes available to community apps per the Hack Club Auth OAuth guide.
+		// `birthdate`/`address` are NOT grantable to non-HQ apps — Boba Drops
+		// collects the shipping address in-app and gates eligibility on
+		// verification_status instead. If HQ later grants those scopes, add them
+		// here; the callback already reads the claims defensively when present.
+		scope: 'openid profile email name slack_id verification_status',
 		state
 	});
 

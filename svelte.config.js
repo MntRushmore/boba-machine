@@ -16,8 +16,10 @@ const config = {
 		csp: {
 			directives: {
 				'script-src': ['self'],
+				'worker-src': ['self', 'blob:'],
 				'style-src': ['self', 'unsafe-inline'],
 				'img-src': ['self', 'data:', 'blob:', 'https:'],
+				'frame-src': ['self', 'blob:'],
 				'object-src': ['none'],
 				'base-uri': ['self']
 			}

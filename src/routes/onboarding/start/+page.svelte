@@ -76,7 +76,7 @@
 				/></svg
 			>
 			<strong><p>join the slack</p></strong>
-			<p>drop by our slack channels to chat, get support, and share ideas with other onekeyers!</p>
+			<p>drop by our slack channels to chat, get support, and share ideas with other builders!</p>
 		</button>
 	</form>
 </section>

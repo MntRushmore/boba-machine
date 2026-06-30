@@ -4,20 +4,65 @@ import { dev } from '$app/environment';
 import { db } from '$lib/server/db';
 import { sessions, users } from '$lib/server/db/schema';
 import { eq, sql } from 'drizzle-orm';
-import { encryptToken, generateSessionToken, hashToken } from '$lib/server/session';
+import { encryptToken, generateSessionToken, hashToken, encryptionKey } from '$lib/server/session';
 import { getLaunched } from '$lib/server/launch';
 import { inviteToChannel } from '$lib/server/slack';
-import { decideEligibility, isEligibleDecision } from '$lib/server/eligibility';
 import { checkYswsStatus } from '$lib/server/verification';
 import type { RequestHandler } from './$types';
 
-const ONEKEY_CHANNEL_ID = 'C0AM132QQUR';
+// Slack channel new builders are auto-invited to on first login. Overridable
+// via env so it can point at the Boba Drops channel without a code change.
+const WELCOME_CHANNEL_ID = env.SLACK_WELCOME_CHANNEL_ID || 'C0AM132QQUR';
 
 const adminSet = new Set((env.ADMIN_IDS || '').split(' ').map((id) => id.trim()).filter(Boolean));
 const reviewerSet = new Set((env.REVIEWER_IDS || '').split(' ').map((id) => id.trim()).filter(Boolean));
 
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
-const DEV_ENCRYPTION_KEY = '0'.repeat(64);
+
+// The claims Boba Drops reads from Hack Club Auth. `birthdate`/`address` are
+// only present if HQ grants those (restricted) scopes — treated as optional.
+interface HcaUserInfo {
+	sub?: string;
+	name?: string;
+	nickname?: string;
+	email?: string;
+	email_verified?: boolean;
+	slack_id?: string;
+	verification_status?: string;
+	birthdate?: string;
+	address?: {
+		street_address?: string;
+		locality?: string;
+		region?: string;
+		postal_code?: string;
+		country?: string;
+	};
+}
+
+/**
+ * Fetch the signed-in user's profile from Hack Club Auth. The OAuth guide
+ * documents `GET /api/v1/me`; some deployments also expose the OIDC-standard
+ * `/oauth/userinfo`. Try the documented one first, fall back to the other, and
+ * unwrap a `{ data: {...} }` envelope if present. Returns null on total failure.
+ */
+async function fetchUserInfo(accessToken: string): Promise<HcaUserInfo | null> {
+	const endpoints = [
+		'https://auth.hackclub.com/api/v1/me',
+		'https://auth.hackclub.com/oauth/userinfo'
+	];
+	for (const ep of endpoints) {
+		try {
+			const res = await fetch(ep, { headers: { Authorization: `Bearer ${accessToken}` } });
+			if (!res.ok) continue;
+			const json = await res.json();
+			const claims = json && typeof json === 'object' && 'data' in json ? json.data : json;
+			return (claims ?? null) as HcaUserInfo | null;
+		} catch {
+			// try the next endpoint
+		}
+	}
+	return null;
+}
 
 export const GET: RequestHandler = async ({ url, cookies }) => {
 	const code = url.searchParams.get('code');
@@ -46,23 +91,20 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 	const access_token: string | undefined = tokenData.access_token;
 	if (!access_token) error(502, 'no access token returned');
 
-	const meRes = await fetch('https://auth.hackclub.com/oauth/userinfo', {
-		headers: { Authorization: `Bearer ${access_token}` }
-	});
-
-	if (!meRes.ok) error(502, 'failed to fetch user info');
-	const user = await meRes.json();
+	// The Hack Club Auth OAuth guide documents the user-info endpoint as
+	// `/api/v1/me`. A standard OIDC `/oauth/userinfo` may also exist but isn't
+	// documented, so try the documented one first and fall back to it.
+	const user = await fetchUserInfo(access_token);
+	if (!user) error(502, 'failed to fetch user info');
 
 	if (!user.sub) redirect(302, '/?error=auth_failed');
 
-	// Eligibility comes from Hack Club Identity's verification check, with the
-	// age (13-18) as a fallback when the user isn't verified yet. `verified_eligible`
-	// bypasses the age check; `verified_but_over_18`/`rejected` are hard-blocked.
+	// Boba Drops is "build a site → get boba": anyone with a Hack Club account can
+	// log in and build. Eligibility (verified 13–18, US for individual cash) is
+	// enforced when they SUBMIT for review + at payout — not at login. We still
+	// fetch + store the latest YSWS check result here so the submit gate + reviewer
+	// panel have it without a second round-trip.
 	const checkResult = await checkYswsStatus(user.sub);
-	const decision = decideEligibility(checkResult, user.birthdate);
-	if (!isEligibleDecision(decision)) {
-		redirect(302, '/ineligible');
-	}
 
 	let avatar_url: string | undefined;
 	let slack_display_name: string | undefined;
@@ -74,10 +116,10 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 		avatar_url = slackData.user?.profile?.image_192 ?? slackData.user?.profile?.image_72 ?? undefined;
 		slack_display_name = slackData.user?.profile?.display_name || slackData.user?.name || undefined;
 
-		inviteToChannel(user.slack_id, ONEKEY_CHANNEL_ID).catch(() => {});
+		inviteToChannel(user.slack_id as string, WELCOME_CHANNEL_ID).catch(() => {});
 	}
 
-	const encKey = Buffer.from(env.TOKEN_ENCRYPTION_KEY || (dev ? DEV_ENCRYPTION_KEY : ''), 'hex');
+	const encKey = encryptionKey();
 	const { ct, iv, tag } = encryptToken(access_token, encKey);
 
 	const userRow = {

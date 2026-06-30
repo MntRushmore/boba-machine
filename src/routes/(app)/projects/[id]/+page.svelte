@@ -87,25 +87,11 @@
 					: 'btn-save'
 	);
 
-	const canReship = $derived(
-		data.isOwnProject && (derivedStatus === 'approved' || derivedStatus === 'rejected')
-	);
+	// In the Boba Drops model a site is resubmitted only after a rejection — an
+	// approved site is done (the grant is already issued).
+	const canReship = $derived(data.isOwnProject && derivedStatus === 'rejected');
 
 	const canEdit = $derived(isDraft || canReship);
-
-	// svelte-ignore state_referenced_locally
-	let approvedMinutesInput = $state(
-		data.latestApproval ? String(Math.floor(data.latestApproval.newSeconds / 60)) : ''
-	);
-	const approvedMinutesConverted = $derived(() => {
-		const m = parseInt(approvedMinutesInput, 10);
-		if (!isFinite(m) || m <= 0) return null;
-		const hrs = Math.floor(m / 60);
-		const mins = m % 60;
-		if (hrs === 0) return `${mins}m`;
-		if (mins === 0) return `${hrs}h`;
-		return `${hrs}h ${mins}m`;
-	});
 
 	function handleUrlBlur(e: Event) {
 		const input = e.currentTarget as HTMLInputElement;
@@ -208,10 +194,10 @@
 		const val = (k: string) => ((fd?.get(k) as string) ?? '').trim();
 		if (!val('name')) return 'a project name';
 		if (!val('description')) return 'a description';
-		if (!val('repo_url')) return 'a repo url';
-		if (!val('demo_url')) return 'a demo url';
+		if (!val('repo_url')) return 'your code repo (github)';
+		if (!val('demo_url')) return 'your live site url (github pages)';
 		if (!displayUrl) return 'a screenshot';
-		if (selectedHtProjects.length === 0) return 'at least one hackatime project';
+		if (!submissionType) return 'how you’re submitting (individual or workshop)';
 		return null;
 	}
 
@@ -306,6 +292,10 @@
 	let hackatimeError = $state('');
 
 	const MAX_HT_PROJECTS = 3;
+
+	// Boba Drops track: 'individual' (US cash) or 'workshop' (grant to leader).
+	// Seeded from the project's stored type so it persists across edits.
+	let submissionType = $state<string>(project.submissionType ?? '');
 
 	// eslint-disable-next-line svelte/prefer-writable-derived
 	let selectedHtProjects = $state<string[]>([]);
@@ -530,29 +520,53 @@
 						>
 					</label>
 					<label class="edit-field">
-						<span class="edit-field-label">repo url</span>
+						<span class="edit-field-label">code repo (github)</span>
 						<input
 							class="edit-input"
 							type="url"
 							name="repo_url"
 							value={project.repoUrl ?? ''}
-							placeholder="https://github.com/..."
+							placeholder="https://github.com/you/site"
 							onblur={handleUrlBlur}
 						/>
 					</label>
 					<label class="edit-field">
-						<span class="edit-field-label">demo url</span>
+						<span class="edit-field-label">live site (github pages)</span>
 						<input
 							class="edit-input"
 							type="url"
 							name="demo_url"
 							value={project.demoUrl ?? ''}
-							placeholder="https://..."
+							placeholder="https://you.github.io/site"
 							onblur={handleUrlBlur}
 						/>
 					</label>
 					<div class="edit-field edit-field-full">
-						<span class="edit-field-label">hackatime projects</span>
+						<span class="edit-field-label">how are you submitting?</span>
+						<input type="hidden" name="submission_type" value={submissionType} />
+						<div class="track-picker">
+							<button
+								type="button"
+								class="track-opt"
+								class:selected={submissionType === 'individual'}
+								onclick={() => (submissionType = 'individual')}
+							>
+								<span class="track-opt-title">individually</span>
+								<span class="track-opt-sub">$5 cash, mailed to you · US only</span>
+							</button>
+							<button
+								type="button"
+								class="track-opt"
+								class:selected={submissionType === 'workshop'}
+								onclick={() => (submissionType = 'workshop')}
+							>
+								<span class="track-opt-title">with a workshop</span>
+								<span class="track-opt-sub">$5 grant to your club leader · worldwide</span>
+							</button>
+						</div>
+					</div>
+					<div class="edit-field edit-field-full">
+						<span class="edit-field-label">hackatime projects <span class="optional">(optional)</span></span>
 						<input type="hidden" name="hackatime_project" value={htValue} />
 						<div class="ht-pills">
 							{#each selectedHtProjects as name, i (name)}
@@ -673,6 +687,42 @@
 		{/if}
 	</div>
 
+	{#if data.isOwnProject}
+		<div class="card card-right" id="publish">
+			<span class="card-label">your site</span>
+			<a class="action-btn action-btn--secondary action-btn--small edit-site-btn" href="/projects/{project.id}/edit">
+				✎ open the editor
+			</a>
+
+			{#if project.demoUrl && project.publishedAt}
+				<p class="published-line">
+					live at
+					<a href={project.demoUrl} target="_blank" rel="noopener noreferrer" class="ext-link">{project.demoUrl}</a>
+				</p>
+			{/if}
+
+			{#if form?.published}
+				<p class="ok-line">✓ published! it can take a minute for GitHub Pages to go live.</p>
+			{/if}
+			{#if form?.error && !form?.success}
+				<p class="form-error">{form.error}</p>
+			{/if}
+
+			{#if data.githubConnected}
+				<form method="POST" action="?/publish" use:enhance>
+					<button type="submit" class="action-btn action-btn--primary action-btn--small">
+						{project.publishedAt ? 'republish to GitHub Pages' : 'publish to GitHub Pages'}
+					</button>
+				</form>
+			{:else}
+				<p class="connect-note">connect GitHub to publish your site to the web.</p>
+				<a class="action-btn action-btn--primary action-btn--small" href="/auth/github/start?return=/projects/{project.id}" data-sveltekit-reload>
+					connect GitHub
+				</a>
+			{/if}
+		</div>
+	{/if}
+
 	{#if isDraft}
 		<div class="card card-right">
 			<span class="card-label">submit</span>
@@ -694,25 +744,16 @@
 
 	{#if canReship}
 		<div class="card card-right">
-			<span class="card-label">reship</span>
-			{#if data.availableSeconds >= 3600}
-				<p class="danger-desc">
-					you have {formatHours(data.availableSeconds)} of new work to submit.
-				</p>
-				{#if form?.error && !form?.success}
-					<p class="form-error">{form.error}</p>
-				{/if}
-				<form method="POST" action="?/reship" use:enhance bind:this={reshipFormEl}>
-					<button type="button" class="btn-submit" onclick={tryReship}>ship again</button>
-				</form>
-			{:else}
-				<p class="danger-desc">
-					keep working! you need at least 1 new hour since your last submission{data.availableSeconds >
-					0
-						? ` (you have ${formatHours(data.availableSeconds)})`
-						: ''}.
-				</p>
+			<span class="card-label">resubmit</span>
+			<p class="danger-desc">
+				addressed the feedback? update your site above, then send it back for another review.
+			</p>
+			{#if form?.error && !form?.success}
+				<p class="form-error">{form.error}</p>
 			{/if}
+			<form method="POST" action="?/reship" use:enhance bind:this={reshipFormEl}>
+				<button type="button" class="btn-submit" onclick={tryReship}>resubmit for review</button>
+			</form>
 		</div>
 	{/if}
 </div>
@@ -800,15 +841,6 @@
 							<span class="event-action event-action-{event.action}"
 								>{actionLabel[event.action] ?? event.action}</span
 							>
-							{#if event.isSubmission && event.newSeconds}
-								<span class="event-hours">{formatHours(event.newSeconds)} submitted</span>
-							{:else if event.action === 'approved' && event.approvedSeconds}
-								<span class="event-hours"
-									>{event.newSeconds && event.approvedSeconds < event.newSeconds
-										? `${formatHours(event.approvedSeconds)} of ${formatHours(event.newSeconds)}`
-										: formatHours(event.approvedSeconds)} approved</span
-								>
-							{/if}
 							<span class="event-time">{formatDate(event.time)}</span>
 						</div>
 						{#if event.message}
@@ -920,70 +952,16 @@
 					<!-- confirming an existing soft approval — no re-entry needed -->
 					<div class="review-soft-summary">
 						<span class="review-soft-row">
-							<span class="review-soft-key">hours approved</span>
-							<span class="review-soft-val"
-								>{data.latestApproval?.approvedSeconds != null
-									? formatHours(data.latestApproval.approvedSeconds)
-									: '—'}</span
-							>
-						</span>
-						<span class="review-soft-row">
 							<span class="review-soft-key">message to author</span>
 							<span class="review-soft-val">{data.latestApproval?.publicMessage ?? '—'}</span>
 						</span>
+						<span class="review-soft-row">
+							<span class="review-soft-key">reward</span>
+							<span class="review-soft-val">$5 boba grant on approval</span>
+						</span>
 					</div>
-				{:else if reviewAction === 'approve'}
-					<label class="review-hours-label">
-						<span class="review-hours-text">minutes to approve</span>
-						<input
-							type="number"
-							name="approved_minutes"
-							class="review-input"
-							min="1"
-							max={data.latestApproval
-								? Math.floor(data.latestApproval.newSeconds / 60)
-								: undefined}
-							bind:value={approvedMinutesInput}
-							step="1"
-							required
-						/>
-						<span class="review-hours-hint">
-							{#if approvedMinutesConverted()}
-								= {approvedMinutesConverted()} ·
-							{/if}
-							submitted: {data.latestApproval ? formatHours(data.latestApproval.newSeconds) : '—'}
-						</span>
-					</label>
-					<textarea class="review-textarea" name="message" placeholder="message to author" required
-					></textarea>
-					<textarea
-						class="review-textarea"
-						name="internal_note"
-						placeholder="internal note (reviewer-only)"
-						required
-					></textarea>
-				{:else if reviewAction === 'soft_approve'}
-					<label class="review-hours-label">
-						<span class="review-hours-text">minutes to approve</span>
-						<input
-							type="number"
-							name="approved_minutes"
-							class="review-input"
-							min="1"
-							max={data.latestApproval
-								? Math.floor(data.latestApproval.newSeconds / 60)
-								: undefined}
-							bind:value={approvedMinutesInput}
-							step="1"
-							required
-						/>
-						<span class="review-hours-hint">
-							{#if approvedMinutesConverted()}
-								= {approvedMinutesConverted()} ·
-							{/if}
-							submitted: {data.latestApproval ? formatHours(data.latestApproval.newSeconds) : '—'}
-						</span>
-					</label>
+				{:else if reviewAction === 'approve' || reviewAction === 'soft_approve'}
+					<p class="review-reward-note">approving issues a <strong>$5 boba grant</strong>.</p>
 					<textarea class="review-textarea" name="message" placeholder="message to author" required
 					></textarea>
 					<textarea
@@ -1223,7 +1201,7 @@
 		width: 100%;
 		height: 360px;
 		border-radius: var(--radius-card);
-		border: solid var(--border-width);
+		border: var(--border-width) solid var(--set-2-fg2);
 		box-sizing: border-box;
 		margin-bottom: clamp(0.75rem, 1.2vw, 1.75rem);
 		overflow: hidden;
@@ -1311,7 +1289,7 @@
 	.card {
 		background: var(--color-bg);
 		border-radius: var(--radius-card);
-		border: solid var(--border-width);
+		border: var(--border-width) solid var(--set-2-fg2);
 		padding: clamp(1rem, 1.5vw, 1.75rem) clamp(1.1rem, 1.5vw, 1.75rem);
 		box-sizing: border-box;
 	}
@@ -1328,6 +1306,31 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0;
+	}
+
+	.edit-site-btn {
+		align-self: flex-start;
+		margin: 0.25rem 0 1rem;
+	}
+	.published-line,
+	.connect-note {
+		font-size: 0.9rem;
+		color: var(--color-text-soft);
+		margin: 0 0 0.75rem;
+		word-break: break-all;
+	}
+	.ok-line {
+		font-size: 0.9rem;
+		color: var(--matcha);
+		margin: 0 0 0.75rem;
+	}
+	.card-right .form-error {
+		background: var(--berry-soft);
+		color: var(--berry);
+		border-radius: var(--radius);
+		padding: 8px 12px;
+		font-size: 0.85rem;
+		margin: 0 0 0.75rem;
 	}
 
 	.card-label {
@@ -1400,8 +1403,63 @@
 		font-size: 0.7rem;
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
-		color: var(--rail-label);
+		color: var(--color-text-soft);
+		opacity: 0.8;
 		font-weight: bold;
+	}
+
+	.edit-field-label .optional {
+		text-transform: none;
+		letter-spacing: 0;
+		opacity: 0.7;
+		font-weight: normal;
+	}
+
+	.track-picker {
+		display: flex;
+		gap: 0.75rem;
+		flex-wrap: wrap;
+	}
+
+	.track-opt {
+		flex: 1;
+		min-width: 200px;
+		text-align: left;
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		padding: 0.85rem 1rem;
+		border-radius: var(--radius-card);
+		background: var(--color-surface);
+		color: var(--color-text);
+		box-shadow: inset 0 0 0 1px var(--color-line);
+		cursor: pointer;
+		transition:
+			box-shadow var(--transition-fast),
+			transform var(--transition-fast);
+	}
+
+	.track-opt:hover {
+		transform: translateY(-1px);
+	}
+
+	.track-opt.selected {
+		box-shadow:
+			inset 0 0 0 2px var(--cream),
+			var(--shadow-stack);
+	}
+
+	.track-opt-title {
+		font-family: var(--font-display);
+		font-size: 1.05rem;
+		font-weight: 600;
+		color: var(--cream);
+	}
+
+	.track-opt-sub {
+		font-size: 0.8rem;
+		color: var(--color-text-soft);
+		opacity: 0.85;
 	}
 
 	.edit-input {
@@ -1509,7 +1567,7 @@
 		left: 0;
 		z-index: 20;
 		background: var(--color-bg);
-		border: solid var(--border-width);
+		border: var(--border-width) solid var(--set-2-fg2);
 		border-radius: calc(var(--radius-card) / 2);
 		padding: 0.3rem;
 		display: flex;
@@ -1638,6 +1696,12 @@
 		color: black;
 		width: 100%;
 		transition: none;
+	}
+
+	.review-reward-note {
+		margin: 0 0 0.5rem;
+		font-size: 0.9rem;
+		color: var(--color-text-soft);
 	}
 
 	.review-soft-summary {
@@ -1944,7 +2008,7 @@
 
 	.event {
 		background: var(--color-bg);
-		border: solid var(--border-width);
+		border: var(--border-width) solid var(--set-2-fg2);
 		border-radius: var(--radius-card);
 		padding: clamp(0.75rem, 1vw, 1.25rem);
 	}
@@ -2057,7 +2121,7 @@
 		flex-direction: column;
 		gap: 0.5rem;
 		background: var(--color-bg);
-		border: solid var(--border-width);
+		border: var(--border-width) solid var(--set-2-fg2);
 		border-radius: var(--radius-card);
 		padding: clamp(0.75rem, 1vw, 1.25rem);
 	}
@@ -2117,7 +2181,7 @@
 
 	.modal-box {
 		background: var(--color-bg);
-		border: solid var(--border-width);
+		border: var(--border-width) solid var(--set-2-fg2);
 		border-radius: var(--radius-card);
 		padding: clamp(1.5rem, 3vw, 2.5rem);
 		width: min(540px, 90vw);
@@ -2282,7 +2346,7 @@
 		border-radius: var(--radius-pill);
 		padding: 0.45rem 0.9rem;
 		cursor: pointer;
-		border: solid var(--border-width);
+		border: var(--border-width) solid var(--set-2-fg2);
 		font-family: inherit;
 		background: var(--color-bg);
 		color: var(--color-text);

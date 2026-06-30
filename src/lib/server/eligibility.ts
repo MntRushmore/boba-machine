@@ -4,11 +4,14 @@
 //   - `verified_but_over_18`   -> hard-blocked from the platform
 //   - `rejected`               -> hard-blocked from the platform
 //   - everything else (needs_submission / pending / not_found / unknown / API
-//     error) -> fall back to the age check (must be 13-18 inclusive). These
-//     users are the "starter prize" tier when age-eligible.
+//     error) -> fall back to the age check (must be 13-18 inclusive).
 //
-// Ages come from Hack Club Auth's standard `birthdate` claim, stored as an ISO
-// `YYYY-MM-DD` string in users.birthday.
+// Ages come from Hack Club Auth's `birthdate` claim (ISO `YYYY-MM-DD` in
+// users.birthday). NOTE: `birthdate` is a restricted scope not granted to
+// community apps, so in practice the birthday is usually absent and the age
+// fallback fails closed — eligibility then effectively requires a
+// `verified_eligible` identity check. The fallback still works if HQ grants the
+// scope, or if a birthday was captured some other way.
 
 export const MIN_AGE = 13;
 export const MAX_AGE = 18;

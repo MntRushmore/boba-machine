@@ -4,7 +4,7 @@
 
 <div class="guides-shell">
 	<header>
-		<a href="/" class="brand" aria-label="onekey home" draggable="false">
+		<a href="/" class="brand" aria-label="Boba Drops home" draggable="false">
 			<img
 				src="https://assets.hackclub.com/flag-standalone-bw.svg"
 				alt="Hack Club"

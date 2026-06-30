@@ -15,8 +15,14 @@ export interface AirtableApprovalFields {
 	authorCountry: string | null;
 	authorPostalCode: string | null;
 	authorBirthday: string | null;
-	approvedSeconds: number;
+	// Boba Drops track + who the $5 grant pays out to (kept for context/logging).
+	submissionType: string; // 'individual' | 'workshop'
+	payoutTarget: string; // 'teen' | 'leader'
 	internalNote: string | null;
+	// NPS feedback (optional; only set if the submit flow collected it).
+	npsHeardAbout?: string | null;
+	npsDoingWell?: string | null;
+	npsImprove?: string | null;
 }
 
 function splitName(fullName: string | null): { first: string | null; last: string | null } {
@@ -52,16 +58,18 @@ export async function createAirtableApprovalRecord(fields: AirtableApprovalField
 
 	const apiKey = env.AIRTABLE_API_KEY;
 	const baseId = env.AIRTABLE_BASE_ID;
-	const tableName = env.AIRTABLE_TABLE_NAME;
 
-	if (!apiKey || !baseId || !tableName) {
-		throw new Error(
-			'Airtable not configured — set AIRTABLE_API_KEY, AIRTABLE_BASE_ID, AIRTABLE_TABLE_NAME'
-		);
+	// Every approved SITE (individual or built in a workshop) is one row in the
+	// "Websites" table — that's the per-submission table in the Boba - YSWS base.
+	// "Club Workshops" is a separate registry of clubs (one row per workshop),
+	// not per-submission, so we don't write site rows there.
+	const tableName = env.AIRTABLE_SUBMISSIONS_TABLE || 'Websites';
+
+	if (!apiKey || !baseId) {
+		throw new Error('Airtable not configured — set AIRTABLE_API_KEY and AIRTABLE_BASE_ID');
 	}
 
 	const { first, last } = splitName(fields.authorName);
-	const hoursSpent = Math.ceil((fields.approvedSeconds / 3600) * 10) / 10;
 	const githubUsername = extractGithubUsername(fields.repoUrl);
 
 	const record: Record<string, unknown> = {};
@@ -72,6 +80,7 @@ export async function createAirtableApprovalRecord(fields: AirtableApprovalField
 		}
 	}
 
+	// Field names match the "Websites" table in the Boba - YSWS base exactly.
 	set('Code URL', fields.repoUrl);
 	set('Playable URL', fields.demoUrl);
 	set('First Name', first);
@@ -87,9 +96,16 @@ export async function createAirtableApprovalRecord(fields: AirtableApprovalField
 	set('Country', fields.authorCountry);
 	set('ZIP / Postal Code', fields.authorPostalCode);
 	set('Birthday', fields.authorBirthday);
-	set('Optional - Override Hours Spent', hoursSpent);
+	// The reviewer's internal note maps to the existing justification field.
 	set('Optional - Override Hours Spent Justification', fields.internalNote);
+	// NPS feedback collected at submission, if present.
+	set('How did you hear about this?', fields.npsHeardAbout);
+	set('What are we doing well?', fields.npsDoingWell);
+	set('How can we improve?', fields.npsImprove);
 
+	console.log(
+		`[airtable] writing ${fields.submissionType} approval (payout → ${fields.payoutTarget}) to "${tableName}"`
+	);
 	const url = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(tableName)}`;
 	const res = await fetch(url, {
 		method: 'POST',

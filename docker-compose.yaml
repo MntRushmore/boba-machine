@@ -3,9 +3,9 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: onekey
+      POSTGRES_DB: boba
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -21,7 +21,7 @@ services:
       - "${PORT:-3000}:3000"
     env_file: .env
     environment:
-      DATABASE_URL: postgres://postgres:${DB_PASSWORD:-changeme}@db:5432/onekey
+      DATABASE_URL: postgres://postgres:${DB_PASSWORD:?set DB_PASSWORD}@db:5432/boba
     depends_on:
       db:
         condition: service_healthy

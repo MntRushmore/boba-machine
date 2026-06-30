@@ -32,53 +32,10 @@ async function hasApprovedProject(dbUserId: string) {
 
 export async function load({ locals }) {
 	if (!locals.user) redirect(302, '/login');
-
-	const verified = locals.user.verification_status === 'verified';
-	const dbUser = await getDbUser(locals.user.sub);
-
-	const categories = await db
-		.select()
-		.from(shopCategories)
-		.orderBy(asc(shopCategories.sortOrder), asc(shopCategories.name));
-
-	// The main shop never shows the unverified-tier prizes; they're claim-only.
-	const items = await db
-		.select()
-		.from(shopItems)
-		.where(and(eq(shopItems.available, true), eq(shopItems.unverifiedPrize, false)))
-		.orderBy(
-			asc(shopItems.categoryId),
-			asc(sql`coalesce(${shopItems.discountSeconds}, ${shopItems.priceSeconds})`),
-			sql`lower(${shopItems.name})`
-		);
-
-	const categoriesWithItems = categories
-		.map((cat) => ({ ...cat, items: items.filter((i) => i.categoryId === cat.id) }))
-		.filter((cat) => cat.items.length > 0);
-
-	// Verified users: real wallet + full shop access. Unverified users: balance hidden
-	// (sent as 0 so it can't leak), shop locked, and a one-time prize-claim path instead.
-	const availableSeconds = verified && dbUser ? await getAvailableSeconds(dbUser.id) : 0;
-
-	const prizeItems = verified
-		? []
-		: await db
-				.select()
-				.from(shopItems)
-				.where(and(eq(shopItems.available, true), eq(shopItems.unverifiedPrize, true)))
-				.orderBy(
-					asc(sql`coalesce(${shopItems.discountSeconds}, ${shopItems.priceSeconds})`),
-					sql`lower(${shopItems.name})`
-				);
-
-	return {
-		categories: categoriesWithItems,
-		availableSeconds,
-		verified,
-		prizeItems,
-		hasApprovedProject: !verified && dbUser ? await hasApprovedProject(dbUser.id) : false,
-		prizeClaimed: !!dbUser?.prizeClaimedAt
-	};
+	// Boba Drops rewards a flat $5 grant per approved site rather than an hours
+	// shop, so the builder-facing shop is retired. Admins still manage shop data
+	// at /admin/shop; this route just sends builders back to their dashboard.
+	redirect(307, '/home');
 }
 
 export const actions = {
