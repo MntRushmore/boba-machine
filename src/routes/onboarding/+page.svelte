@@ -85,22 +85,24 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		width: 1.85rem;
-		height: 1.85rem;
+		width: 1.9rem;
+		height: 1.9rem;
 		border-radius: 50%;
-		background: var(--color-text);
-		color: var(--color-bg);
-		font-weight: bold;
+		background: var(--cream);
+		color: var(--set-1);
+		font-weight: 800;
 		font-size: 0.95rem;
-		margin-bottom: 0.35rem;
+		margin-bottom: 0.5rem;
 	}
 
 	.step-title {
-		font-size: clamp(0.95rem, 1.1vw, 1.2rem);
-		font-weight: bold;
+		font-family: var(--font-display);
+		font-size: clamp(1rem, 1.1vw, 1.25rem);
+		font-weight: 700;
 		letter-spacing: -0.01em;
 		line-height: 1.15;
 		margin: 0;
+		color: var(--ink);
 	}
 
 	.step-desc {
