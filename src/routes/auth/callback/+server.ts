@@ -21,6 +21,7 @@ const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 // The claims Boba Drops reads from Hack Club Auth. `birthdate`/`address` are
 // only present if HQ grants those (restricted) scopes — treated as optional.
+// Normalized shape the rest of the callback consumes (flat, OIDC-ish).
 interface HcaUserInfo {
 	sub?: string;
 	name?: string;
@@ -29,6 +30,7 @@ interface HcaUserInfo {
 	email_verified?: boolean;
 	slack_id?: string;
 	verification_status?: string;
+	ysws_eligible?: boolean;
 	birthdate?: string;
 	address?: {
 		street_address?: string;
@@ -36,6 +38,62 @@ interface HcaUserInfo {
 		region?: string;
 		postal_code?: string;
 		country?: string;
+	};
+}
+
+// The ACTUAL Hack Club Auth `/api/v1/me` response nests everything under
+// `identity` with its own field names (id, primary_email, first_name, …).
+// Normalize it to HcaUserInfo so downstream code stays simple.
+interface HcaIdentity {
+	id?: string;
+	first_name?: string;
+	last_name?: string;
+	primary_email?: string;
+	email?: string;
+	slack_id?: string;
+	verification_status?: string;
+	ysws_eligible?: boolean;
+	birthday?: string;
+	birthdate?: string;
+	addresses?: Array<{
+		line_1?: string;
+		line_2?: string;
+		city?: string;
+		state?: string;
+		postal_code?: string;
+		zip_code?: string;
+		country?: string;
+	}>;
+}
+
+function normalizeIdentity(raw: unknown): HcaUserInfo | null {
+	if (!raw || typeof raw !== 'object') return null;
+	const obj = raw as Record<string, unknown>;
+	// Real shape: { identity: {...}, scopes: [...] }. Also tolerate a flat/OIDC
+	// response or a { data: {...} } envelope.
+	const id = (obj.identity ?? obj.data ?? obj) as HcaIdentity & Record<string, unknown>;
+	const sub = id.id ?? (id as Record<string, unknown>).sub;
+	if (!sub || typeof sub !== 'string') return null;
+	const name = [id.first_name, id.last_name].filter(Boolean).join(' ').trim() || (id as Record<string, unknown>).name as string | undefined;
+	const addr = Array.isArray(id.addresses) ? id.addresses[0] : undefined;
+	return {
+		sub,
+		name: name || undefined,
+		email: id.primary_email ?? id.email,
+		email_verified: !!(id.primary_email ?? id.email),
+		slack_id: id.slack_id,
+		verification_status: id.verification_status,
+		ysws_eligible: id.ysws_eligible,
+		birthdate: id.birthday ?? id.birthdate,
+		address: addr
+			? {
+					street_address: addr.line_1,
+					locality: addr.city,
+					region: addr.state,
+					postal_code: addr.postal_code ?? addr.zip_code,
+					country: addr.country
+				}
+			: undefined
 	};
 }
 
@@ -53,12 +111,16 @@ async function fetchUserInfo(accessToken: string): Promise<HcaUserInfo | null> {
 	for (const ep of endpoints) {
 		try {
 			const res = await fetch(ep, { headers: { Authorization: `Bearer ${accessToken}` } });
-			if (!res.ok) continue;
+			if (!res.ok) {
+				console.error('[hca-callback] userinfo', ep, '→', res.status, (await res.text()).slice(0, 200));
+				continue;
+			}
 			const json = await res.json();
-			const claims = json && typeof json === 'object' && 'data' in json ? json.data : json;
-			return (claims ?? null) as HcaUserInfo | null;
-		} catch {
-			// try the next endpoint
+			const normalized = normalizeIdentity(json);
+			console.log('[hca-callback] userinfo OK from', ep, '→ sub:', normalized?.sub);
+			if (normalized) return normalized;
+		} catch (e) {
+			console.error('[hca-callback] userinfo fetch threw for', ep, (e as Error).message);
 		}
 	}
 	return null;
@@ -69,8 +131,28 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 	const state = url.searchParams.get('state');
 	const savedState = cookies.get('hca_state');
 
-	if (!code || !state) redirect(302, '/?error=auth_failed');
-	if (!savedState || state !== savedState) redirect(302, '/?error=session_expired');
+	console.log('[hca-callback] hit:', {
+		hasCode: !!code,
+		hasState: !!state,
+		hasSavedState: !!savedState,
+		stateMatches: !!savedState && state === savedState,
+		errParam: url.searchParams.get('error'),
+		errDesc: url.searchParams.get('error_description')
+	});
+
+	// Hack Club Auth may redirect back with its own error (e.g. access_denied).
+	if (url.searchParams.get('error')) {
+		console.error('[hca-callback] provider returned error:', url.searchParams.get('error'), url.searchParams.get('error_description'));
+		redirect(302, '/?error=auth_failed');
+	}
+	if (!code || !state) {
+		console.error('[hca-callback] missing code/state');
+		redirect(302, '/?error=auth_failed');
+	}
+	if (!savedState || state !== savedState) {
+		console.error('[hca-callback] state mismatch — savedState present:', !!savedState);
+		redirect(302, '/?error=session_expired');
+	}
 
 	cookies.delete('hca_state', { path: '/' });
 
@@ -86,18 +168,32 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 		})
 	});
 
-	if (!tokenRes.ok) error(502, 'token exchange failed');
+	if (!tokenRes.ok) {
+		const body = await tokenRes.text();
+		console.error('[hca-callback] token exchange failed', tokenRes.status, body.slice(0, 300));
+		error(502, 'token exchange failed');
+	}
 	const tokenData = await tokenRes.json();
 	const access_token: string | undefined = tokenData.access_token;
-	if (!access_token) error(502, 'no access token returned');
+	if (!access_token) {
+		console.error('[hca-callback] no access_token in token response:', JSON.stringify(tokenData).slice(0, 200));
+		error(502, 'no access token returned');
+	}
 
 	// The Hack Club Auth OAuth guide documents the user-info endpoint as
 	// `/api/v1/me`. A standard OIDC `/oauth/userinfo` may also exist but isn't
 	// documented, so try the documented one first and fall back to it.
 	const user = await fetchUserInfo(access_token);
-	if (!user) error(502, 'failed to fetch user info');
+	if (!user) {
+		console.error('[hca-callback] fetchUserInfo returned null');
+		error(502, 'failed to fetch user info');
+	}
+	console.log('[hca-callback] userinfo keys:', Object.keys(user), 'sub:', user.sub);
 
-	if (!user.sub) redirect(302, '/?error=auth_failed');
+	if (!user.sub) {
+		console.error('[hca-callback] userinfo missing sub:', JSON.stringify(user).slice(0, 200));
+		redirect(302, '/?error=auth_failed');
+	}
 
 	// Boba Drops is "build a site → get boba": anyone with a Hack Club account can
 	// log in and build. Eligibility (verified 13–18, US for individual cash) is
